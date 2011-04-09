@@ -23,8 +23,8 @@ plask.simpleWindow({
         this.prog_noise = new em.MagicProgram(gl, em.makeProgram(gl, "noise_test.glsl"));
 
         // Make Plane (for rendering FBOs)
-        this.plane = em.makePlane(gl, 0, 0, 1, 1, this.prog_noise.location_a_pos,
-                                                  this.prog_noise.location_a_texc);
+        this.plane = em.makePlane(gl, 0, 0, 1, 1, this.prog_noise.loc_a_pos,
+                                                  this.prog_noise.loc_a_texc);
 
         this.start_time = Date.now() - Math.random() * 10000;
     },

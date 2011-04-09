@@ -58,6 +58,7 @@ exports.makeProgram = function(gl, filename) {
 
 
 // Magic Program taken from Dean McNamee's PreGL
+// https://github.com/deanm/pregl
 exports.MagicProgram = function(gl, program){
     this.gl = gl;
     this.program = program;
@@ -112,7 +113,7 @@ exports.MagicProgram = function(gl, program){
         var name = info.name;
         var loc = gl.getUniformLocation(program, name);
         this['set_' + name] = makeSetter(info.type, loc);
-        this['location_' + name] = loc;
+        this['loc_' + name] = loc;
     }
 
     var num_attribs = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
@@ -120,12 +121,13 @@ exports.MagicProgram = function(gl, program){
         var info = gl.getActiveAttrib(program, i);
         var name = info.name;
         var loc = gl.getAttribLocation(program, name);
-        this['location_' + name] = loc;
+        this['loc_' + name] = loc;
     }
 }
 
 
-// Object Creation Helpers
+// GL Object Creation Helpers
+
 
 // Texture
 // |data| typed array (Uint32Array, Float32Array)
