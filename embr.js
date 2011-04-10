@@ -4,7 +4,7 @@ var fs    = require('fs')
 
 // Shader Loader
 // Parses includes: #include "incl.glsl"
-// Allows vertex and fragment code to be in the same file but surrounded by
+// Allows vertex and fragment code to be in the same file if surrounded by
 // #ifdef VERTEX or FRAGMENT
 
 var kVertexShaderPrefix   = "#define VERTEX\n";
