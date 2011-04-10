@@ -132,6 +132,8 @@ exports.MagicProgram = function(gl, program){
 // Texture
 // |data| typed array (Uint32Array, Float32Array)
 exports.makeTexture = function(gl, width, height, data, fmt){
+    if(fmt === undefined) fmt = {};
+
     var target     = fmt.target !== undefined ? fmt.target : gl.TEXTURE_2D
     ,   unit       = fmt.unit !== undefined ? fmt.unit : 0
     ,   formati    = fmt.formati !== undefined ? fmt.formati : gl.RGBA
@@ -169,6 +171,41 @@ exports.makeTexture = function(gl, width, height, data, fmt){
         }
     };
 }
+
+// Skia Canvas to texture
+exports.makeTextureSkCanvas = function(gl, canvas, fmt){
+    if(fmt === undefined) fmt = {};
+
+    var target     = fmt.target !== undefined ? fmt.target : gl.TEXTURE_2D
+    ,   unit       = fmt.unit !== undefined ? fmt.unit : 0
+    ,   filter_min = fmt.filter_min !== undefined ? fmt.filter_min : gl.NEAREST
+    ,   filter_mag = fmt.filter_mag !== undefined ? fmt.filter_mag : gl.NEAREST
+    ,   wrap_s     = fmt.wrap_s !== undefined ? fmt.wrap_s : gl.CLAMP_TO_EDGE
+    ,   wrap_t     = fmt.wrap_t !== undefined ? fmt.wrap_t : gl.CLAMP_TO_EDGE;
+    var obj = gl.createTexture();
+    gl.activeTexture(gl.TEXTURE0 + unit);
+    gl.bindTexture(target, obj);
+    gl.texImage2DSkCanvas(target, 0, canvas);
+    gl.texParameteri(target, gl.TEXTURE_MIN_FILTER, filter_min);
+    gl.texParameteri(target, gl.TEXTURE_MAG_FILTER, filter_mag);
+    gl.texParameteri(target, gl.TEXTURE_WRAP_S, wrap_s);
+    gl.texParameteri(target, gl.TEXTURE_WRAP_T, wrap_t);
+
+    return {
+        obj: obj,
+        target: target,
+        bind: function(gl, unit) {
+            if(unit !== undefined)
+                this.unit = unit;
+            gl.activeTexture(gl.TEXTURE0 + this.unit);
+            gl.bindTexture(this.target, this.obj);
+        },
+        unbind: function(gl, unit) {
+            gl.activeTexture(gl.TEXTURE0 + this.unit);
+            gl.bindTexture(this.target, null);
+        }
+    };
+};
 
 
 // Frame Buffer Object
