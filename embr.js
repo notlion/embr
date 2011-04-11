@@ -3,14 +3,14 @@ var fs    = require('fs')
 
 
 // Shader Loader
-// Parses includes: #include "incl.glsl"
+// Parses #include "source.glsl" where source.glsl is a filename previously
+// loaded via loadProgram() or makeProgram().
 // Allows vertex and fragment code to be in the same file if surrounded by
-// #ifdef VERTEX or FRAGMENT
+// #ifdef VERTEX or FRAGMENT.
 
-var kVertexShaderPrefix   = "#define VERTEX\n";
-var kFragmentShaderPrefix = "#define FRAGMENT\n";
-
-var programs = {};
+var kVertexShaderPrefix   = "#define VERTEX\n"
+,   kFragmentShaderPrefix = "#define FRAGMENT\n"
+,   programs = {};
 
 function processShaderIncludes(src){
     var match, re = /^ *#include +"([\w\-\.]+)"/gm;
@@ -101,7 +101,6 @@ exports.MagicProgram = function(gl, program){
             default:
             break;
         }
-
         return function(){
             throw "MagicProgram doesn't know how to set type: " + type;
         };
@@ -126,16 +125,12 @@ exports.MagicProgram = function(gl, program){
 }
 
 
-// GL Object Creation Helpers
-
-
 // Texture
 // |data| typed array (Uint32Array, Float32Array)
 exports.makeTexture = function(gl, width, height, data, fmt){
     if(fmt === undefined) fmt = {};
 
     var target     = fmt.target !== undefined ? fmt.target : gl.TEXTURE_2D
-    ,   unit       = fmt.unit !== undefined ? fmt.unit : 0
     ,   formati    = fmt.formati !== undefined ? fmt.formati : gl.RGBA
     ,   format     = fmt.format !== undefined ? fmt.format : gl.RGBA
     ,   type       = fmt.type !== undefined ? fmt.type : gl.UNSIGNED_BYTE
@@ -145,7 +140,6 @@ exports.makeTexture = function(gl, width, height, data, fmt){
     ,   wrap_t     = fmt.wrap_t !== undefined ? fmt.wrap_t : gl.CLAMP_TO_EDGE
     ,   tex_data   = data !== undefined ? data : null;
     var obj = gl.createTexture();
-    gl.activeTexture(gl.TEXTURE0 + unit);
     gl.bindTexture(target, obj);
     gl.texImage2D(target, 0, formati, width, height, 0, format, type, tex_data);
     gl.texParameteri(target, gl.TEXTURE_MIN_FILTER, filter_min);
@@ -158,32 +152,27 @@ exports.makeTexture = function(gl, width, height, data, fmt){
         height: height,
         obj:    obj,
         target: target,
-        unit:   unit,
         bind: function(gl, unit){
-            if(unit !== undefined)
-                this.unit = unit;
-            gl.activeTexture(gl.TEXTURE0 + this.unit);
+            gl.activeTexture(gl.TEXTURE0 + unit);
             gl.bindTexture(this.target, this.obj);
         },
         unbind: function(gl, unit){
-            gl.activeTexture(gl.TEXTURE0 + this.unit);
+            gl.activeTexture(gl.TEXTURE0 + unit);
             gl.bindTexture(this.target, null);
         }
     };
 }
 
-// Skia Canvas to texture
+// Skia Canvas to Texture
 exports.makeTextureSkCanvas = function(gl, canvas, fmt){
     if(fmt === undefined) fmt = {};
 
     var target     = fmt.target !== undefined ? fmt.target : gl.TEXTURE_2D
-    ,   unit       = fmt.unit !== undefined ? fmt.unit : 0
     ,   filter_min = fmt.filter_min !== undefined ? fmt.filter_min : gl.NEAREST
     ,   filter_mag = fmt.filter_mag !== undefined ? fmt.filter_mag : gl.NEAREST
     ,   wrap_s     = fmt.wrap_s !== undefined ? fmt.wrap_s : gl.CLAMP_TO_EDGE
     ,   wrap_t     = fmt.wrap_t !== undefined ? fmt.wrap_t : gl.CLAMP_TO_EDGE;
     var obj = gl.createTexture();
-    gl.activeTexture(gl.TEXTURE0 + unit);
     gl.bindTexture(target, obj);
     gl.texImage2DSkCanvas(target, 0, canvas);
     gl.texParameteri(target, gl.TEXTURE_MIN_FILTER, filter_min);
@@ -195,13 +184,11 @@ exports.makeTextureSkCanvas = function(gl, canvas, fmt){
         obj: obj,
         target: target,
         bind: function(gl, unit) {
-            if(unit !== undefined)
-                this.unit = unit;
-            gl.activeTexture(gl.TEXTURE0 + this.unit);
+            gl.activeTexture(gl.TEXTURE0 + unit);
             gl.bindTexture(this.target, this.obj);
         },
         unbind: function(gl, unit) {
-            gl.activeTexture(gl.TEXTURE0 + this.unit);
+            gl.activeTexture(gl.TEXTURE0 + unit);
             gl.bindTexture(this.target, null);
         }
     };
@@ -218,7 +205,6 @@ exports.makeFbo = function(gl, width, height, formats){
     for(var i = 0, n = formats.length; i < n; i++){
         var fmt = formats[i];
         var target     = fmt.target !== undefined ? fmt.target : gl.TEXTURE_2D
-        ,   unit       = fmt.unit !== undefined ? fmt.unit : 0
         ,   formati    = fmt.formati !== undefined ? fmt.formati : gl.RGBA
         ,   format     = fmt.format !== undefined ? fmt.format : gl.RGBA
         ,   type       = fmt.type !== undefined ? fmt.type : gl.UNSIGNED_BYTE
@@ -227,16 +213,15 @@ exports.makeFbo = function(gl, width, height, formats){
         ,   wrap_s     = fmt.wrap_s !== undefined ? fmt.wrap_s : gl.CLAMP_TO_EDGE
         ,   wrap_t     = fmt.wrap_t !== undefined ? fmt.wrap_t : gl.CLAMP_TO_EDGE
         ,   fbo_attach = format == gl.DEPTH_COMPONENT ? gl.DEPTH_ATTACHMENT : gl.COLOR_ATTACHMENT0 + i;
-        var obj = gl.createTexture();
-        gl.activeTexture(gl.TEXTURE0 + unit);
-        gl.bindTexture(target, obj);
+        var tex = gl.createTexture();
+        gl.bindTexture(target, tex);
         gl.texImage2D(target, 0, formati, width, height, 0, format, type, null);
         gl.texParameteri(target, gl.TEXTURE_MIN_FILTER, filter_min);
         gl.texParameteri(target, gl.TEXTURE_MAG_FILTER, filter_mag);
         gl.texParameteri(target, gl.TEXTURE_WRAP_S, wrap_s);
         gl.texParameteri(target, gl.TEXTURE_WRAP_T, wrap_t);
-        gl.framebufferTexture2D(gl.FRAMEBUFFER, fbo_attach, target, obj, 0);
-        attachments.push({ obj: obj, target: target });
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, fbo_attach, target, tex, 0);
+        attachments.push({ obj: tex, target: target });
     }
 
     if(gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE){
@@ -263,7 +248,7 @@ exports.makeFbo = function(gl, width, height, formats){
         },
         unbindTexture: function(gl, i, unit){
             gl.activeTexture(gl.TEXTURE0 + unit);
-            gl.bindTexture(this.attachments[i].target, 0);
+            gl.bindTexture(this.attachments[i].target, null);
         }
     };
 }
