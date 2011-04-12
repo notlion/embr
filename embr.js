@@ -282,36 +282,43 @@ PingPong.prototype.swap = function(){
 // |usage| gl.STATIC_DRAW, gl.STREAM_DRAW or gl.DYNAMIC_DRAW
 // |attributes| an array of objects in the format:
 // [{ data: [], size: 3, location: 0 }]
-function makeVbo(gl, type, usage, attributes){
-    var attribs = [];
-    var n_indices = Number.MAX_VALUE;
+function makeVbo(gl, type, usage, attrs, indices){
+    var attributes = []
+    ,   has_indices = indices !== undefined
+    ,   num_indices = has_indices ? indices.length : Number.MAX_VALUE;
 
-    for(var i = attributes.length; --i >= 0;){
-        var att = attributes[i];
-        n_indices = Math.min(n_indices, att.data.length / att.size);
+    for(var i = attrs.length; --i >= 0;){
+        var a = attrs[i];
+        if(!has_indices)
+            num_indices = Math.min(num_indices, a.data.length / a.size);
         var buffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(att.data), usage);
-        attribs.push({
-            buffer:   buffer,
-            location: att.location,
-            size:     att.size
-        });
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(a.data), usage);
+        attributes.push({ buffer: buffer, size: a.size, location: a.location });
     }
+
+    if(has_indices)
+        indices = new Uint16Array(indices);
 
     return {
         draw: function(gl){
-            for(var a, i = attribs.length; --i >= 0;){
-                a = attribs[i];
+            for(var a, i = attributes.length; --i >= 0;){
+                a = attributes[i];
                 gl.bindBuffer(gl.ARRAY_BUFFER, a.buffer);
                 gl.vertexAttribPointer(a.location, a.size, gl.FLOAT, false, 0, 0);
                 gl.enableVertexAttribArray(a.location);
             }
-            gl.drawArrays(type, 0, n_indices);
+            if(has_indices){
+                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer_index);
+                gl.drawElements(type, num_indices, gl.UNSIGNED_SHORT, 0);
+            }
+            else{
+                gl.drawArrays(type, 0, num_indices);
+            }
         },
         destroy: function(gl){
-            for(var i = attribs.length; --i >= 0;)
-            gl.deleteBuffer(attribs[i])
+            for(var i = attributes.length; --i >= 0;)
+                gl.deleteBuffer(attributes[i])
         }
     };
 }
@@ -325,6 +332,43 @@ exports.makePlane = function(gl, x1, y1, x2, y2, loc_vtx, loc_txc){
         { data: plane_verts, size: 3, location: loc_vtx },
         { data: plane_texcs, size: 2, location: loc_txc }
     ]);
+}
+
+// Cube
+exports.makeCube = function(gl, sx, sy, sz, loc_vtx, loc_nrm, loc_txc){
+    var vertices = [ sx, sy, sz,  sx,-sy, sz,  sx,-sy,-sz,  sx, sy,-sz,  // +X
+                     sx, sy, sz,  sx, sy,-sz, -sx, sy,-sz, -sx, sy, sz,  // +Y
+                     sx, sy, sz, -sx, sy, sz, -sx,-sy, sz,  sx,-sy, sz,  // +Z
+                    -sx, sy, sz, -sx, sy,-sz, -sx,-sy,-sz, -sx,-sy, sz,  // -X
+                    -sx,-sy,-sz,  sx,-sy,-sz,  sx,-sy, sz, -sx,-sy, sz,  // -Y
+                     sx,-sy,-sz, -sx,-sy,-sz, -sx, sy,-sz,  sx, sy,-sz]; // -Z
+
+    var normals = [ 1, 0, 0,  1, 0, 0,  1, 0, 0,  1, 0, 0,
+                    0, 1, 0,  0, 1, 0,  0, 1, 0,  0, 1, 0,
+                    0, 0, 1,  0, 0, 1,  0, 0, 1,  0, 0, 1,
+                   -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0,
+                    0,-1, 0,  0,-1, 0,  0,-1, 0,  0,-1, 0,
+                    0, 0,-1,  0, 0,-1,  0, 0,-1,  0, 0,-1];
+
+    var texcoords = [0,1, 1,1, 1,0, 0,0,
+                     1,1, 1,0, 0,0, 0,1,
+                     0,1, 1,1, 1,0, 0,0,
+                     1,1, 1,0, 0,0, 0,1,
+                     1,0, 0,0, 0,1, 1,1,
+                     1,0, 0,0, 0,1, 1,1];
+
+    var indices = [ 0, 1, 2, 0, 2, 3,
+                    4, 5, 6, 4, 6, 7,
+                    8, 9,10, 8,10,11,
+                   12,13,14,12,14,15,
+                   16,17,18,16,18,19,
+                   20,21,22,20,22,23];
+
+    return makeVbo(gl, gl.TRIANGLES, gl.STATIC_DRAW, [
+        { data: vertices,  size: 3, location: loc_vtx },
+        { data: normals,   size: 3, location: loc_nrm },
+        { data: texcoords, size: 2, location: loc_txc }
+    ], indices);
 }
 
 
