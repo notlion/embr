@@ -28,7 +28,7 @@ function processShaderIncludes(src){
 exports.loadProgram = function(filename) {
     var src = processShaderIncludes(fs.readFileSync(filename, 'utf8'));
     programs[filename] = src;
-}
+};
 
 exports.makeProgram = function(gl, filename) {
     var src = processShaderIncludes(fs.readFileSync(filename, 'utf8'));
@@ -54,7 +54,7 @@ exports.makeProgram = function(gl, filename) {
         throw gl.getProgramInfoLog(prog);
 
     return prog;
-}
+};
 
 
 // Magic Program taken from Dean McNamee's PreGL
@@ -122,7 +122,7 @@ exports.MagicProgram = function(gl, program){
         var loc = gl.getAttribLocation(program, name);
         this['loc_' + name] = loc;
     }
-}
+};
 
 
 // Texture
@@ -161,7 +161,7 @@ exports.makeTexture = function(gl, width, height, data, fmt){
             gl.bindTexture(this.target, null);
         }
     };
-}
+};
 
 // Skia Canvas to Texture
 exports.makeTextureSkCanvas = function(gl, canvas, fmt){
@@ -258,6 +258,7 @@ function makeFbo(gl, width, height, formats){
         }
     };
 }
+exports.makeFbo = makeFbo;
 
 
 function PingPong(gl, width, height, formats){
@@ -275,6 +276,7 @@ PingPong.prototype.swap = function(){
     this.bindTexture   = this.rbuffer.bindTexture;
     this.unbindTexture = this.rbuffer.unbindTexture;
 };
+exports.PingPong = PingPong;
 
 
 // Vertex Buffer Object
@@ -322,6 +324,7 @@ function makeVbo(gl, type, usage, attrs, indices){
         }
     };
 }
+exports.makeVbo = makeVbo;
 
 
 // Plane
@@ -332,7 +335,7 @@ exports.makePlane = function(gl, x1, y1, x2, y2, loc_vtx, loc_txc){
         { data: plane_verts, size: 3, location: loc_vtx },
         { data: plane_texcs, size: 2, location: loc_txc }
     ]);
-}
+};
 
 // Cube
 exports.makeCube = function(gl, sx, sy, sz, loc_vtx, loc_nrm, loc_txc){
@@ -369,10 +372,4 @@ exports.makeCube = function(gl, sx, sy, sz, loc_vtx, loc_nrm, loc_txc){
         { data: normals,   size: 3, location: loc_nrm },
         { data: texcoords, size: 2, location: loc_txc }
     ], indices);
-}
-
-
-exports.makeFbo = makeFbo;
-exports.makeVbo = makeVbo;
-
-exports.PingPong = PingPong;
+};
