@@ -183,12 +183,15 @@ exports.makeTextureSkCanvas = function(gl, canvas, fmt){
     return {
         obj: obj,
         target: target,
+        unit: gl.TEXTURE0,
         bind: function(gl, unit) {
-            gl.activeTexture(gl.TEXTURE0 + unit);
-            gl.bindTexture(this.target, this.obj);
+            if(unit !== undefined)
+                this.unit = gl.TEXTURE0 + unit;
+            gl.activeTexture(this.unit);
+            gl.bindTexture(this.target, obj);
         },
-        unbind: function(gl, unit) {
-            gl.activeTexture(gl.TEXTURE0 + unit);
+        unbind: function(gl) {
+            gl.activeTexture(this.unit);
             gl.bindTexture(this.target, null);
         }
     };
@@ -196,7 +199,7 @@ exports.makeTextureSkCanvas = function(gl, canvas, fmt){
 
 
 // Frame Buffer Object
-exports.makeFbo = function(gl, width, height, formats){
+function makeFbo(gl, width, height, formats){
     var attachments = [];
     var fbo = gl.createFramebuffer();
 
@@ -221,7 +224,7 @@ exports.makeFbo = function(gl, width, height, formats){
         gl.texParameteri(target, gl.TEXTURE_WRAP_S, wrap_s);
         gl.texParameteri(target, gl.TEXTURE_WRAP_T, wrap_t);
         gl.framebufferTexture2D(gl.FRAMEBUFFER, fbo_attach, target, tex, 0);
-        attachments.push({ obj: tex, target: target });
+        attachments.push({ obj: tex, target: target, unit: gl.TEXTURE0 });
     }
 
     if(gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE){
@@ -236,25 +239,45 @@ exports.makeFbo = function(gl, width, height, formats){
         obj:    fbo,
         attachments: attachments,
         bind: function(gl){
-            gl.bindFramebuffer(gl.FRAMEBUFFER, this.obj);
+            gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
         },
         unbind: function(gl){
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         },
         bindTexture: function(gl, i, unit){
-            var att = this.attachments[i];
-            gl.activeTexture(gl.TEXTURE0 + unit);
+            var att = attachments[i];
+            if(unit !== undefined)
+                att.unit = gl.TEXTURE0 + unit;
+            gl.activeTexture(att.unit);
             gl.bindTexture(att.target, att.obj);
         },
-        unbindTexture: function(gl, i, unit){
-            gl.activeTexture(gl.TEXTURE0 + unit);
-            gl.bindTexture(this.attachments[i].target, null);
+        unbindTexture: function(gl, i){
+            var att = attachments[i];
+            gl.activeTexture(att.unit);
+            gl.bindTexture(att.target, null);
         }
     };
 }
 
 
-// Static Vertex Buffer Object
+function PingPong(gl, width, height, formats){
+    this.wbuffer = makeFbo(gl, width, height, formats);
+    this.rbuffer = makeFbo(gl, width, height, formats);
+    this.swap();
+}
+PingPong.prototype.swap = function(){
+    var tmp = this.wbuffer;
+    this.wbuffer = this.rbuffer;
+    this.rbuffer = tmp;
+
+    this.bind   = this.wbuffer.bind;
+    this.unbind = this.wbuffer.unbind;
+    this.bindTexture   = this.rbuffer.bindTexture;
+    this.unbindTexture = this.rbuffer.unbindTexture;
+};
+
+
+// Vertex Buffer Object
 // |type| gl.POINTS, gl.TRIANGLES etc..
 // |usage| gl.STATIC_DRAW, gl.STREAM_DRAW or gl.DYNAMIC_DRAW
 // |attributes| an array of objects in the format:
@@ -305,4 +328,7 @@ exports.makePlane = function(gl, x1, y1, x2, y2, loc_vtx, loc_txc){
 }
 
 
+exports.makeFbo = makeFbo;
 exports.makeVbo = makeVbo;
+
+exports.PingPong = PingPong;
