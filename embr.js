@@ -152,11 +152,11 @@ exports.makeTexture = function(gl, width, height, data, fmt){
         height: height,
         obj:    obj,
         target: target,
-        bind: function(gl, unit){
+        bind: function(unit){
             gl.activeTexture(gl.TEXTURE0 + unit);
             gl.bindTexture(this.target, this.obj);
         },
-        unbind: function(gl, unit){
+        unbind: function(unit){
             gl.activeTexture(gl.TEXTURE0 + unit);
             gl.bindTexture(this.target, null);
         }
@@ -184,13 +184,13 @@ exports.makeTextureSkCanvas = function(gl, canvas, fmt){
         obj: obj,
         target: target,
         unit: gl.TEXTURE0,
-        bind: function(gl, unit) {
+        bind: function(unit) {
             if(unit !== undefined)
                 this.unit = gl.TEXTURE0 + unit;
             gl.activeTexture(this.unit);
             gl.bindTexture(this.target, obj);
         },
-        unbind: function(gl) {
+        unbind: function() {
             gl.activeTexture(this.unit);
             gl.bindTexture(this.target, null);
         }
@@ -238,20 +238,20 @@ function makeFbo(gl, width, height, formats){
         height: height,
         obj:    fbo,
         attachments: attachments,
-        bind: function(gl){
+        bind: function(){
             gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
         },
-        unbind: function(gl){
+        unbind: function(){
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         },
-        bindTexture: function(gl, i, unit){
+        bindTexture: function(i, unit){
             var att = attachments[i];
             if(unit !== undefined)
                 att.unit = gl.TEXTURE0 + unit;
             gl.activeTexture(att.unit);
             gl.bindTexture(att.target, att.obj);
         },
-        unbindTexture: function(gl, i){
+        unbindTexture: function(i){
             var att = attachments[i];
             gl.activeTexture(att.unit);
             gl.bindTexture(att.target, null);
