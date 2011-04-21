@@ -382,3 +382,26 @@ exports.makeCube = function(gl, sx, sy, sz, loc_vtx, loc_nrm, loc_txc){
         { data: texcoords, size: 2, location: loc_txc }
     ], indices);
 };
+
+
+// Particle
+function Particle3(x, y, z){
+    this.pos = new plask.Vec3(x, y, z)
+    this.vel = new plask.Vec3(0, 0, 0)
+}
+Particle3.prototype.spring = function(pos, length, power){
+    var p = this.pos
+    ,   v = this.vel
+    ,   ox = pos.x - p.x
+    ,   oy = pos.y - p.y
+    ,   oz = pos.z - p.z
+    ,   mag = Math.sqrt(ox * ox + oy * oy + oz * oz)
+    power *= mag - length
+    v.x += ox / mag * power
+    v.y += oy / mag * power
+    v.z += oz / mag * power
+}
+Particle3.prototype.step = function(){
+    this.pos.add(this.vel)
+}
+exports.Particle3 = Particle3
