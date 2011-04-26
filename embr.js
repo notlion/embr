@@ -1,6 +1,7 @@
 var fs    = require('fs')
 ,   plask = require('plask');
 
+var kEpsilon = Math.pow(2, -53)
 
 // Shader Loader
 // Parses #include "source.glsl" where source.glsl is a filename previously
@@ -367,21 +368,108 @@ exports.makeCube = function(gl, sx, sy, sz, loc_vtx, loc_nrm, loc_txc){
                      0,1, 1,1, 1,0, 0,0,
                      1,1, 1,0, 0,0, 0,1,
                      1,0, 0,0, 0,1, 1,1,
-                     1,0, 0,0, 0,1, 1,1];
+                     1,0, 0,0, 0,1, 1,1]
 
     var indices = [ 0, 1, 2, 0, 2, 3,
                     4, 5, 6, 4, 6, 7,
                     8, 9,10, 8,10,11,
                    12,13,14,12,14,15,
                    16,17,18,16,18,19,
-                   20,21,22,20,22,23];
+                   20,21,22,20,22,23]
 
     return makeVbo(gl, gl.TRIANGLES, gl.STATIC_DRAW, [
         { data: vertices,  size: 3, location: loc_vtx },
         { data: normals,   size: 3, location: loc_nrm },
         { data: texcoords, size: 2, location: loc_txc }
-    ], indices);
+    ], indices)
 };
+
+
+// Quaternion
+function Quat(){
+    this.reset()
+}
+
+Quat.prototype.set = function(x, y, z, w){
+    this.x = x; this.y = y; this.z = z; this.w = w
+    return this
+}
+
+Quat.prototype.reset = function(){
+    this.set(0, 0, 0, 1)
+    return this
+}
+
+Quat.prototype.mult2 = function(a, b){
+    var ax = a.x, ay = a.y, az = a.z, aw = a.w
+    ,   bx = b.x, by = b.y, bz = b.z, bw = b.w
+
+    this.x = aw*aw - ax*ax - ay*ay - az*az
+    this.y = aw*ax + ax*aw + ay*az - az*ay
+    this.z = aw*ay + ay*aw + az*ax - ax*az
+    this.w = aw*az + az*aw + ax*ay - ay*ax
+
+    return this
+}
+
+Quat.prototype.mult = function(b){
+    return this.mult2(a, b)
+}
+
+Quat.prototype.mult4 = function(x, y, z, w){
+    var ax = this.x, ay = this.y, az = this.z, aw = this.w
+
+    this.x = w*aw - x*ax - y*ay - z*az
+    this.y = w*ax + x*aw + y*az - z*ay
+    this.z = w*ay + y*aw + z*ax - x*az
+    this.w = w*az + z*aw + x*ay - y*ax
+
+    return this
+}
+
+Quat.prototype.dot = function(b){
+    return this.x * b.x + this.y * b.y + this.z * b.z + this.w * b.w;
+}
+
+Quat.prototype.toMat4 = function(){
+    var xs = this.x + this.x
+    ,   ys = this.y + this.y
+    ,   zs = this.z + this.z
+    ,   wx = this.w * xs
+    ,   wy = this.w * ys
+    ,   wz = this.w * zs
+    ,   xx = this.x * xs
+    ,   xy = this.x * ys
+    ,   xz = this.x * zs
+    ,   yy = this.y * ys
+    ,   yz = this.y * zs
+    ,   zz = this.z * zs
+
+    return new Mat4().set4x4r(
+        1 - (yy+zz), xy - wz,      xz + wy,     0,
+        xy + wz,     1 - (xx+zz ), yz - wx,     0,
+        xz - wy,     yz + wx,      1 - (xx+yy), 0,
+        0,           0,            0,           1
+    )
+}
+
+Quat.prototype.rotate = function(theta, x, y, z){
+    var len = Math.sqrt(x*x + y*y + z*z)
+    ,   st2 = Math.sin(theta / 2)
+
+    this.mult4(
+        (x / len) * st2,
+        (y / len) * st2,
+        (z / len) * st2,
+        Math.cos(theta / 2)
+    )
+
+    return this
+}
+
+Quat.prototype.dup = function(){
+    return new Quat().set(this.x, this.y, this.z)
+}
 
 
 // Particle
