@@ -1,7 +1,7 @@
 var fs    = require('fs')
 ,   plask = require('plask');
 
-var kEpsilon = Math.pow(2, -53)
+var kEpsilon = Math.pow(2, -24)
 
 // Shader Loader
 // Parses #include "source.glsl" where source.glsl is a filename previously
@@ -397,39 +397,56 @@ Quat.prototype.set = function(x, y, z, w){
 }
 
 Quat.prototype.reset = function(){
-    this.set(0, 0, 0, 1)
-    return this
+    return this.set(0, 0, 0, 1)
+}
+
+Quat.prototype.length = function(){
+    var x = this.x, y = this.y, z = this.z, w = this.w
+    return Math.sqrt(x*x + y*y + z*z + w*w)
+}
+
+Quat.prototype.dot = function(b){
+    return this.x * b.x + this.y * b.y + this.z * b.z + this.w * b.w
 }
 
 Quat.prototype.mult2 = function(a, b){
     var ax = a.x, ay = a.y, az = a.z, aw = a.w
     ,   bx = b.x, by = b.y, bz = b.z, bw = b.w
 
-    this.x = aw*aw - ax*ax - ay*ay - az*az
-    this.y = aw*ax + ax*aw + ay*az - az*ay
-    this.z = aw*ay + ay*aw + az*ax - ax*az
-    this.w = aw*az + az*aw + ax*ay - ay*ax
+    this.x = bw*ax + bx*aw + by*az - bz*ay
+    this.y = bw*ay + by*aw + bz*ax - bx*az
+    this.z = bw*az + bz*aw + bx*ay - by*ax
+    this.w = bw*aw - bx*ax - by*ay - bz*az
 
     return this
 }
 
 Quat.prototype.mult = function(b){
-    return this.mult2(a, b)
+    return this.mult2(this, b)
 }
 
 Quat.prototype.mult4 = function(x, y, z, w){
     var ax = this.x, ay = this.y, az = this.z, aw = this.w
 
-    this.x = w*aw - x*ax - y*ay - z*az
-    this.y = w*ax + x*aw + y*az - z*ay
-    this.z = w*ay + y*aw + z*ax - x*az
-    this.w = w*az + z*aw + x*ay - y*ax
+    this.x = w*ax + x*aw + y*az - z*ay
+    this.y = w*ay + y*aw + z*ax - x*az
+    this.z = w*az + z*aw + x*ay - y*ax
+    this.w = w*aw - x*ax - y*ay - z*az
 
     return this
 }
 
-Quat.prototype.dot = function(b){
-    return this.x * b.x + this.y * b.y + this.z * b.z + this.w * b.w;
+Quat.prototype.normalize = function(){
+    var len = this.length()
+
+    if(len > kEpsilon){
+        this.x /= len
+        this.y /= len
+        this.z /= len
+        this.w /= len
+    }
+
+    return this
 }
 
 Quat.prototype.toMat4 = function(){
@@ -456,20 +473,19 @@ Quat.prototype.toMat4 = function(){
 
 Quat.prototype.rotate = function(theta, x, y, z){
     var len = Math.sqrt(x*x + y*y + z*z)
-    ,   st2 = Math.sin(theta / 2)
+    ,   t2  = theta / 2
+    ,   st2 = Math.sin(t2)
 
-    this.mult4(
+    return this.mult4(
         (x / len) * st2,
         (y / len) * st2,
         (z / len) * st2,
-        Math.cos(theta / 2)
+        Math.cos(t2)
     )
-
-    return this
 }
 
 Quat.prototype.dup = function(){
-    return new Quat().set(this.x, this.y, this.z)
+    return new Quat().set(this.x, this.y, this.z, this.w)
 }
 
 exports.Quat = Quat
