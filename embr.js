@@ -386,6 +386,7 @@ exports.makeCube = function(gl, sx, sy, sz, loc_vtx, loc_nrm, loc_txc){
 
 
 // Quaternion
+
 function Quat(){
     this.reset()
 }
@@ -445,7 +446,7 @@ Quat.prototype.toMat4 = function(){
     ,   yz = this.y * zs
     ,   zz = this.z * zs
 
-    return new Mat4().set4x4r(
+    return new plask.Mat4().set4x4r(
         1 - (yy+zz), xy - wz,      xz + wy,     0,
         xy + wz,     1 - (xx+zz ), yz - wx,     0,
         xz - wy,     yz + wx,      1 - (xx+yy), 0,
@@ -471,12 +472,16 @@ Quat.prototype.dup = function(){
     return new Quat().set(this.x, this.y, this.z)
 }
 
+exports.Quat = Quat
+
 
 // Particle
+
 function Particle3(x, y, z){
     this.pos = new plask.Vec3(x, y, z)
     this.vel = new plask.Vec3(0, 0, 0)
 }
+
 Particle3.prototype.spring = function(pos, length, power){
     var p = this.pos
     ,   v = this.vel
@@ -491,22 +496,28 @@ Particle3.prototype.spring = function(pos, length, power){
         v.z += oz / mag * power
     }
 }
+
 Particle3.prototype.step = function(){
     this.pos.add(this.vel)
 }
+
 exports.Particle3 = Particle3
 
 
 // Random Helpers
+
 function rand(min, max){
     return min + Math.random() * (max - min);
 }
+
 function randSym(max){
     return max * 2 * Math.random() - max;
 }
+
 function randVec3Sym(max){
     return new plask.Vec3(randSym(max), randSym(max), randSym(max));
 }
+
 exports.rand = rand
 exports.randSym = randSym
 exports.randVec3Sym = randVec3Sym
