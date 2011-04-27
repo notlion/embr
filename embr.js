@@ -484,12 +484,29 @@ Particle3.prototype.spring = function(pos, length, power){
     ,   oy = pos.y - p.y
     ,   oz = pos.z - p.z
     ,   mag = Math.sqrt(ox * ox + oy * oy + oz * oz)
-    power *= mag - length
-    v.x += ox / mag * power
-    v.y += oy / mag * power
-    v.z += oz / mag * power
+    if(mag > kEpsilon){
+        power *= mag - length
+        v.x += ox / mag * power
+        v.y += oy / mag * power
+        v.z += oz / mag * power
+    }
 }
 Particle3.prototype.step = function(){
     this.pos.add(this.vel)
 }
 exports.Particle3 = Particle3
+
+
+// Random Helpers
+function rand(min, max){
+    return min + Math.random() * (max - min);
+}
+function randSym(max){
+    return max * 2 * Math.random() - max;
+}
+function randVec3Sym(max){
+    return new plask.Vec3(randSym(max), randSym(max), randSym(max));
+}
+exports.rand = rand
+exports.randSym = randSym
+exports.randVec3Sym = randVec3Sym
