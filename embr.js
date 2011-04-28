@@ -493,6 +493,22 @@ exports.Quat = Quat
 
 // Particle
 
+function Particle1(x){
+    this.pos = x
+    this.vel = 0
+}
+
+Particle1.prototype.spring = function(x, length, power){
+    var xo  = x - this.pos
+    ,   mag = Math.abs(xo)
+    if(mag > kEpsilon)
+        this.vel += (xo / mag * (mag - length)) * power;
+}
+
+Particle1.prototype.step = function(){
+    this.pos += this.vel
+}
+
 function Particle3(x, y, z){
     this.pos = new plask.Vec3(x, y, z)
     this.vel = new plask.Vec3(0, 0, 0)
@@ -517,6 +533,7 @@ Particle3.prototype.step = function(){
     this.pos.add(this.vel)
 }
 
+exports.Particle1 = Particle1
 exports.Particle3 = Particle3
 
 
