@@ -154,12 +154,18 @@ exports.makeTexture = function(gl, width, height, data, fmt){
         obj:    obj,
         target: target,
         bind: function(unit){
-            gl.activeTexture(gl.TEXTURE0 + unit);
-            gl.bindTexture(this.target, this.obj);
+            if(unit !== undefined)
+                gl.activeTexture(gl.TEXTURE0 + unit);
+            gl.bindTexture(target, obj);
         },
         unbind: function(unit){
-            gl.activeTexture(gl.TEXTURE0 + unit);
-            gl.bindTexture(this.target, null);
+            if(unit !== undefined)
+                gl.activeTexture(gl.TEXTURE0 + unit);
+            gl.bindTexture(target, null);
+        },
+        update: function(data){
+            gl.bindTexture(target, obj);
+            gl.texSubImage2D(target, 0, 0, 0, width, height, format, type, data);
         }
     };
 };
@@ -184,16 +190,15 @@ exports.makeTextureSkCanvas = function(gl, canvas, fmt){
     return {
         obj: obj,
         target: target,
-        unit: gl.TEXTURE0,
-        bind: function(unit) {
+        bind: function(unit){
             if(unit !== undefined)
-                this.unit = gl.TEXTURE0 + unit;
-            gl.activeTexture(this.unit);
-            gl.bindTexture(this.target, obj);
+                gl.activeTexture(gl.TEXTURE0 + unit);
+            gl.bindTexture(target, obj);
         },
-        unbind: function() {
-            gl.activeTexture(this.unit);
-            gl.bindTexture(this.target, null);
+        unbind: function(unit){
+            if(unit !== undefined)
+                gl.activeTexture(gl.TEXTURE0 + unit);
+            gl.bindTexture(target, null);
         }
     };
 };
