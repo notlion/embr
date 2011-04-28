@@ -473,15 +473,17 @@ Quat.prototype.toMat4 = function(){
 
 Quat.prototype.rotate = function(theta, x, y, z){
     var len = Math.sqrt(x*x + y*y + z*z)
-    ,   t2  = theta / 2
-    ,   st2 = Math.sin(t2)
 
-    return this.mult4(
-        (x / len) * st2,
-        (y / len) * st2,
-        (z / len) * st2,
-        Math.cos(t2)
-    )
+    if(len > kEpsilon){
+        var t2  = theta / 2
+        ,   st2 = Math.sin(t2)
+        this.mult4((x / len) * st2,
+                   (y / len) * st2,
+                   (z / len) * st2,
+                   Math.cos(t2))
+    }
+
+    return this
 }
 
 Quat.prototype.dup = function(){
