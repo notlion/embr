@@ -188,7 +188,9 @@ exports.makeTextureSkCanvas = function(gl, canvas, fmt){
     gl.texParameteri(target, gl.TEXTURE_WRAP_T, wrap_t);
 
     return {
-        obj: obj,
+        width:  canvas.width,
+        height: canvas.height,
+        obj:    obj,
         target: target,
         bind: function(unit){
             if(unit !== undefined)
