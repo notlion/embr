@@ -1,6 +1,9 @@
 var fs    = require('fs')
-,   plask = require('plask');
+,   plask = require('plask')
 
+var kPI  = 3.14159265358979323846264338327950288
+var kPI2 = 1.57079632679489661923132169163975144
+var k2PI = 6.28318530717958647692528676655900576
 var kEpsilon = Math.pow(2, -24)
 
 // Shader Loader
@@ -556,10 +559,17 @@ function randSym(max){
     return max * 2 * Math.random() - max;
 }
 
-function randVec3Sym(max){
-    return new plask.Vec3(randSym(max), randSym(max), randSym(max));
+function randVec3(radius){
+    var phi      = Math.random() * k2PI
+    var costheta = Math.random() * 2 - 1
+
+    var rho = Math.sqrt(1 - costheta * costheta)
+
+    return new plask.Vec3( rho * Math.cos(phi) * radius
+                         , rho * Math.sin(phi) * radius
+                         , costheta * radius )
 }
 
 exports.rand = rand
 exports.randSym = randSym
-exports.randVec3Sym = randVec3Sym
+exports.randVec3 = randVec3
