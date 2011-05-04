@@ -1,10 +1,18 @@
 var fs    = require('fs')
 ,   plask = require('plask')
 
+var Vec2  = require('./core/Vec2').Vec2
+,   Vec3  = require('./core/Vec3').Vec3
+,   Vec4  = require('./core/Vec4').Vec4
+,   Quat  = require('./core/Quat').Quat
+,   Mat4  = require('./core/Mat4').Mat4
+
+
 var kPI  = 3.14159265358979323846264338327950288
 var kPI2 = 1.57079632679489661923132169163975144
 var k2PI = 6.28318530717958647692528676655900576
 var kEpsilon = Math.pow(2, -24)
+
 
 // Shader Loader
 // Parses #include "source.glsl" where source.glsl is a filename previously
@@ -29,12 +37,12 @@ function processShaderIncludes(src){
     return src;
 }
 
-exports.loadProgram = function(filename) {
+function loadProgram(filename) {
     var src = processShaderIncludes(fs.readFileSync(filename, 'utf8'));
     programs[filename] = src;
 };
 
-exports.makeProgram = function(gl, filename) {
+function makeProgram(gl, filename) {
     var src = processShaderIncludes(fs.readFileSync(filename, 'utf8'));
     programs[filename] = src;
 
@@ -63,7 +71,8 @@ exports.makeProgram = function(gl, filename) {
 
 // Magic Program taken from Dean McNamee's PreGL
 // https://github.com/deanm/pregl
-exports.MagicProgram = function(gl, program){
+
+function MagicProgram(gl, program){
     this.gl = gl;
     this.program = program;
 
@@ -131,7 +140,8 @@ exports.MagicProgram = function(gl, program){
 
 // Texture
 // |data| typed array (Uint32Array, Float32Array)
-exports.makeTexture = function(gl, width, height, data, fmt){
+
+function makeTexture(gl, width, height, data, fmt){
     if(fmt === undefined) fmt = {};
 
     var target     = fmt.target !== undefined ? fmt.target : gl.TEXTURE_2D
@@ -173,8 +183,10 @@ exports.makeTexture = function(gl, width, height, data, fmt){
     };
 };
 
+
 // Skia Canvas to Texture
-exports.makeTextureSkCanvas = function(gl, canvas, fmt){
+
+function makeTextureSkCanvas(gl, canvas, fmt){
     if(fmt === undefined) fmt = {};
 
     var target     = fmt.target !== undefined ? fmt.target : gl.TEXTURE_2D
@@ -210,6 +222,7 @@ exports.makeTextureSkCanvas = function(gl, canvas, fmt){
 
 
 // Frame Buffer Object
+
 function makeFbo(gl, width, height, formats){
     var tex_attachments = []
     ,   render_attachments = []
@@ -278,8 +291,11 @@ function makeFbo(gl, width, height, formats){
         }
     };
 }
-exports.makeFbo = makeFbo;
 
+
+// Ping-Pong
+// Two swappable framebuffers. Used for feedback effects and GPGPU where it's
+// necessary to access the state of the last iteration.
 
 function PingPong(gl, width, height, formats){
     this.wbuffer = makeFbo(gl, width, height, formats);
@@ -296,7 +312,6 @@ PingPong.prototype.swap = function(){
     this.bindTexture   = this.rbuffer.bindTexture;
     this.unbindTexture = this.rbuffer.unbindTexture;
 };
-exports.PingPong = PingPong;
 
 
 // Vertex Buffer Object
@@ -304,6 +319,7 @@ exports.PingPong = PingPong;
 // |usage| gl.STATIC_DRAW, gl.STREAM_DRAW or gl.DYNAMIC_DRAW
 // |attributes| an array of objects in the format:
 // [{ data: [], size: 3, location: 0 }]
+
 function makeVbo(gl, type, usage, attrs, indices){
     var attributes = []
     ,   has_indices = indices !== undefined
@@ -344,11 +360,11 @@ function makeVbo(gl, type, usage, attrs, indices){
         }
     };
 }
-exports.makeVbo = makeVbo;
 
 
 // Plane
-exports.makePlane = function(gl, x1, y1, x2, y2, loc_vtx, loc_txc){
+
+function makePlane(gl, x1, y1, x2, y2, loc_vtx, loc_txc){
     var plane_verts = [ x1, y1, 0, x1, y2, 0, x2, y1, 0, x2, y2, 0 ];
     var plane_texcs = [ 0, 0, 0, 1, 1, 0, 1, 1 ];
     return makeVbo(gl, gl.TRIANGLE_STRIP, gl.STATIC_DRAW, [
@@ -357,8 +373,10 @@ exports.makePlane = function(gl, x1, y1, x2, y2, loc_vtx, loc_txc){
     ]);
 };
 
+
 // Cube
-exports.makeCube = function(gl, sx, sy, sz, loc_vtx, loc_nrm, loc_txc){
+
+function makeCube(gl, sx, sy, sz, loc_vtx, loc_nrm, loc_txc){
     var vertices = [ sx, sy, sz,  sx,-sy, sz,  sx,-sy,-sz,  sx, sy,-sz,  // +X
                      sx, sy, sz,  sx, sy,-sz, -sx, sy,-sz, -sx, sy, sz,  // +Y
                      sx, sy, sz, -sx, sy, sz, -sx,-sy, sz,  sx,-sy, sz,  // +Z
@@ -395,114 +413,6 @@ exports.makeCube = function(gl, sx, sy, sz, loc_vtx, loc_nrm, loc_txc){
 };
 
 
-// Quaternion
-
-function Quat(){
-    this.reset()
-}
-
-Quat.prototype.set = function(x, y, z, w){
-    this.x = x; this.y = y; this.z = z; this.w = w
-    return this
-}
-
-Quat.prototype.reset = function(){
-    return this.set(0, 0, 0, 1)
-}
-
-Quat.prototype.length = function(){
-    var x = this.x, y = this.y, z = this.z, w = this.w
-    return Math.sqrt(x*x + y*y + z*z + w*w)
-}
-
-Quat.prototype.dot = function(b){
-    return this.x * b.x + this.y * b.y + this.z * b.z + this.w * b.w
-}
-
-Quat.prototype.mult2 = function(a, b){
-    var ax = a.x, ay = a.y, az = a.z, aw = a.w
-    ,   bx = b.x, by = b.y, bz = b.z, bw = b.w
-
-    this.x = bw*ax + bx*aw + by*az - bz*ay
-    this.y = bw*ay + by*aw + bz*ax - bx*az
-    this.z = bw*az + bz*aw + bx*ay - by*ax
-    this.w = bw*aw - bx*ax - by*ay - bz*az
-
-    return this
-}
-
-Quat.prototype.mult = function(b){
-    return this.mult2(this, b)
-}
-
-Quat.prototype.mult4 = function(x, y, z, w){
-    var ax = this.x, ay = this.y, az = this.z, aw = this.w
-
-    this.x = w*ax + x*aw + y*az - z*ay
-    this.y = w*ay + y*aw + z*ax - x*az
-    this.z = w*az + z*aw + x*ay - y*ax
-    this.w = w*aw - x*ax - y*ay - z*az
-
-    return this
-}
-
-Quat.prototype.normalize = function(){
-    var len = this.length()
-
-    if(len > kEpsilon){
-        this.x /= len
-        this.y /= len
-        this.z /= len
-        this.w /= len
-    }
-
-    return this
-}
-
-Quat.prototype.toMat4 = function(){
-    var xs = this.x + this.x
-    ,   ys = this.y + this.y
-    ,   zs = this.z + this.z
-    ,   wx = this.w * xs
-    ,   wy = this.w * ys
-    ,   wz = this.w * zs
-    ,   xx = this.x * xs
-    ,   xy = this.x * ys
-    ,   xz = this.x * zs
-    ,   yy = this.y * ys
-    ,   yz = this.y * zs
-    ,   zz = this.z * zs
-
-    return new plask.Mat4().set4x4r(
-        1 - (yy+zz), xy - wz,      xz + wy,     0,
-        xy + wz,     1 - (xx+zz ), yz - wx,     0,
-        xz - wy,     yz + wx,      1 - (xx+yy), 0,
-        0,           0,            0,           1
-    )
-}
-
-Quat.prototype.rotate = function(theta, x, y, z){
-    var len = Math.sqrt(x*x + y*y + z*z)
-
-    if(len > kEpsilon){
-        var t2  = theta / 2
-        ,   st2 = Math.sin(t2)
-        this.mult4((x / len) * st2,
-                   (y / len) * st2,
-                   (z / len) * st2,
-                   Math.cos(t2))
-    }
-
-    return this
-}
-
-Quat.prototype.dup = function(){
-    return new Quat().set(this.x, this.y, this.z, this.w)
-}
-
-exports.Quat = Quat
-
-
 // Particle
 
 function Particle1(x){
@@ -522,8 +432,8 @@ Particle1.prototype.step = function(){
 }
 
 function Particle3(x, y, z){
-    this.pos = new plask.Vec3(x, y, z)
-    this.vel = new plask.Vec3(0, 0, 0)
+    this.pos = new Vec3(x, y, z)
+    this.vel = new Vec3(0, 0, 0)
 }
 
 Particle3.prototype.spring = function(pos, length, power){
@@ -545,9 +455,6 @@ Particle3.prototype.step = function(){
     this.pos.add(this.vel)
 }
 
-exports.Particle1 = Particle1
-exports.Particle3 = Particle3
-
 
 // Random Helpers
 
@@ -565,11 +472,35 @@ function randVec3(radius){
 
     var rho = Math.sqrt(1 - costheta * costheta)
 
-    return new plask.Vec3( rho * Math.cos(phi) * radius
-                         , rho * Math.sin(phi) * radius
-                         , costheta * radius )
+    return new Vec3( rho * Math.cos(phi) * radius
+                   , rho * Math.sin(phi) * radius
+                   , costheta * radius )
 }
 
-exports.rand = rand
-exports.randSym = randSym
+
+exports.Vec2 = Vec2
+exports.Vec3 = Vec3
+exports.Vec4 = Vec4
+exports.Quat = Quat
+exports.Mat4 = Mat4
+
+exports.loadProgram  = loadProgram
+exports.makeProgram  = makeProgram
+exports.MagicProgram = MagicProgram
+
+exports.makeTexture         = makeTexture
+exports.makeTextureSkCanvas = makeTextureSkCanvas
+
+exports.makeFbo  = makeFbo
+exports.PingPong = PingPong
+
+exports.makeVbo   = makeVbo
+exports.makePlane = makePlane
+exports.makeCube  = makeCube
+
+exports.rand     = rand
+exports.randSym  = randSym
 exports.randVec3 = randVec3
+
+exports.Particle1 = Particle1
+exports.Particle3 = Particle3
