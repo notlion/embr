@@ -435,6 +435,8 @@ function randVec3(radius){
 }
 
 
+exports.noise = require('./noise')
+
 exports.Vec2 = Vec2
 exports.Vec3 = Vec3
 exports.Vec4 = Vec4
