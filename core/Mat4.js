@@ -1,8 +1,7 @@
 // Mat4 adapted from Dean McNamee's PreGL
 // https://github.com/deanm/pregl
 
-
-var Vec3 = require('./Vec3')
+var Vec3 = require('./Vec3').Vec3
 
 
 // This represents an affine 4x4 matrix, using mathematical notation,
@@ -130,7 +129,6 @@ Mat4.prototype.rotate = function(theta, x, y, z){
   return this;
 }
 
-// Multiply by a translation of x, y, and z.
 Mat4.prototype.translate = function(dx, dy, dz){
     // TODO(deanm): Special case the multiply since most goes unchanged.
     this.mult4x4r(1, 0, 0, dx,
@@ -141,12 +139,10 @@ Mat4.prototype.translate = function(dx, dy, dz){
     return this;
 }
 
-// Multiply by a translation of the Vec3 v.
 Mat4.prototype.translateVec3 = function(v){
     return this.translate(v.x, v.y, v.z);
 }
 
-// Multiply by a scale of x, y, and z.
 Mat4.prototype.scale = function(sx, sy, sz){
     // TODO(deanm): Special case the multiply since most goes unchanged.
     this.mult4x4r(sx,  0,  0, 0,
@@ -157,7 +153,6 @@ Mat4.prototype.scale = function(sx, sy, sz){
     return this;
 }
 
-// Multiply by a scale of the Vec3 v.
 Mat4.prototype.scaleVec3 = function(v){
     return this.scale(v.x, v.y, v.z);
 }
@@ -178,8 +173,7 @@ Mat4.prototype.lookAt = function(ex, ey, ez, cx, cy, cz, ux, uy, uz){
     return this;
 }
 
-// Multiply by a frustum matrix computed from left, right, bottom, top,
-// near, and far.
+// Multiply by a frustum matrix computed from left, right, bottom, top, near, and far.
 Mat4.prototype.frustum = function(l, r, b, t, n, f){
   this.mult4x4r(
       (n+n)/(r-l),           0, (r+l)/(r-l),             0,
@@ -194,7 +188,7 @@ Mat4.prototype.frustum = function(l, r, b, t, n, f){
 // ratio, and the z near and far planes.
 Mat4.prototype.perspective = function(fovy, aspect, znear, zfar){
     // This could also be done reusing the frustum calculation:
-    // var ymax = znear * Math.tan(fovy * kPI / 360.0);
+    // var ymax = znear * Math.tan(fovy * Math.PI / 360.0);
     // var ymin = -ymax;
     //
     // var xmin = ymin * aspect;
@@ -202,7 +196,7 @@ Mat4.prototype.perspective = function(fovy, aspect, znear, zfar){
     //
     // return makeFrustumAffine(xmin, xmax, ymin, ymax, znear, zfar);
 
-    var f = 1.0 / Math.tan(fovy * kPI / 360.0);
+    var f = 1.0 / Math.tan(fovy * Math.PI / 360.0);
     this.mult4x4r(
         f/aspect, 0,                         0,                         0,
                0, f,                         0,                         0,

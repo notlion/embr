@@ -2,7 +2,7 @@
 // https://github.com/deanm/pregl
 
 
-var Vec3 = require('./Vec3')
+var Vec3 = require('./Vec3').Vec3
 
 
 function Vec4(x, y, z, w) {
@@ -21,7 +21,6 @@ Vec4.prototype.setVec4 = function(v) {
 }
 
 
-// Interpolate between this and another Vec4 |b|, based on |t|.
 Vec4.prototype.lerp = function(b, t) {
     this.x += (b.x - this.x) * t;
     this.y += (b.y - this.y) * t;
@@ -33,17 +32,12 @@ Vec4.prototype.lerp = function(b, t) {
 
 
 Vec4.prototype.dup = function(){
-  return new Vec4(this.x, this.y, this.z, this.w);
+    return new Vec4(this.x, this.y, this.z, this.w);
 }
 
 
 Vec4.prototype.toVec3 = function(){
-  return new Vec3(this.x, this.y, this.z);
-}
-
-
-Vec4.prototype.debugString = function(){
-  return 'x: ' + this.x + ' y: ' + this.y + ' z: ' + this.z + ' w: ';
+    return new Vec3(this.x, this.y, this.z);
 }
 
 

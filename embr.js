@@ -8,12 +8,6 @@ var Vec2  = require('./core/Vec2').Vec2
 ,   Mat4  = require('./core/Mat4').Mat4
 
 
-var kPI  = 3.14159265358979323846264338327950288
-var kPI2 = 1.57079632679489661923132169163975144
-var k2PI = 6.28318530717958647692528676655900576
-var kEpsilon = Math.pow(2, -24)
-
-
 // Shader Loader
 // Parses #include "source.glsl" where source.glsl is a filename previously
 // loaded via loadProgram() or makeProgram().
@@ -413,50 +407,13 @@ function makeCube(gl, sx, sy, sz, loc_vtx, loc_nrm, loc_txc){
 };
 
 
-// Particle
+// Math Helpers
 
-function Particle1(x){
-    this.pos = x
-    this.vel = 0
-}
+var kPI  = Math.PI
+var kPI2 = Math.PI / 2
+var kPI4 = Math.PI / 4
+var k2PI = Math.PI * 2
 
-Particle1.prototype.spring = function(x, length, power){
-    var xo  = x - this.pos
-    ,   mag = Math.abs(xo)
-    if(mag > kEpsilon)
-        this.vel += (xo / mag * (mag - length)) * power;
-}
-
-Particle1.prototype.step = function(){
-    this.pos += this.vel
-}
-
-function Particle3(x, y, z){
-    this.pos = new Vec3(x, y, z)
-    this.vel = new Vec3(0, 0, 0)
-}
-
-Particle3.prototype.spring = function(pos, length, power){
-    var p = this.pos
-    ,   v = this.vel
-    ,   ox = pos.x - p.x
-    ,   oy = pos.y - p.y
-    ,   oz = pos.z - p.z
-    ,   mag = Math.sqrt(ox * ox + oy * oy + oz * oz)
-    if(mag > kEpsilon){
-        power *= mag - length
-        v.x += ox / mag * power
-        v.y += oy / mag * power
-        v.z += oz / mag * power
-    }
-}
-
-Particle3.prototype.step = function(){
-    this.pos.add(this.vel)
-}
-
-
-// Random Helpers
 
 function rand(min, max){
     return min + Math.random() * (max - min);
@@ -498,9 +455,11 @@ exports.makeVbo   = makeVbo
 exports.makePlane = makePlane
 exports.makeCube  = makeCube
 
+exports.kPI  = kPI
+exports.kPI2 = kPI2
+exports.kPI4 = kPI4
+exports.k2PI = k2PI
+
 exports.rand     = rand
 exports.randSym  = randSym
 exports.randVec3 = randVec3
-
-exports.Particle1 = Particle1
-exports.Particle3 = Particle3

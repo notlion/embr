@@ -1,5 +1,11 @@
 // Quaternion
 
+
+var Mat4 = require('./Mat4').Mat4
+
+var kEpsilon = Math.pow(2, -24)
+
+
 function Quat(){
     this.reset()
 }
@@ -13,14 +19,17 @@ Quat.prototype.reset = function(){
     return this.set(0, 0, 0, 1)
 }
 
+
 Quat.prototype.length = function(){
     var x = this.x, y = this.y, z = this.z, w = this.w
     return Math.sqrt(x*x + y*y + z*z + w*w)
 }
 
+
 Quat.prototype.dot = function(b){
     return this.x * b.x + this.y * b.y + this.z * b.z + this.w * b.w
 }
+
 
 Quat.prototype.mult2 = function(a, b){
     var ax = a.x, ay = a.y, az = a.z, aw = a.w
@@ -62,27 +71,6 @@ Quat.prototype.normalize = function(){
     return this
 }
 
-Quat.prototype.toMat4 = function(){
-    var xs = this.x + this.x
-    ,   ys = this.y + this.y
-    ,   zs = this.z + this.z
-    ,   wx = this.w * xs
-    ,   wy = this.w * ys
-    ,   wz = this.w * zs
-    ,   xx = this.x * xs
-    ,   xy = this.x * ys
-    ,   xz = this.x * zs
-    ,   yy = this.y * ys
-    ,   yz = this.y * zs
-    ,   zz = this.z * zs
-
-    return new plask.Mat4().set4x4r(
-        1 - (yy+zz), xy - wz,      xz + wy,     0,
-        xy + wz,     1 - (xx+zz ), yz - wx,     0,
-        xz - wy,     yz + wx,      1 - (xx+yy), 0,
-        0,           0,            0,           1
-    )
-}
 
 Quat.prototype.rotate = function(theta, x, y, z){
     var len = Math.sqrt(x*x + y*y + z*z)
@@ -99,8 +87,33 @@ Quat.prototype.rotate = function(theta, x, y, z){
     return this
 }
 
+
+Quat.prototype.toMat4 = function(){
+    var xs = this.x + this.x
+    ,   ys = this.y + this.y
+    ,   zs = this.z + this.z
+    ,   wx = this.w * xs
+    ,   wy = this.w * ys
+    ,   wz = this.w * zs
+    ,   xx = this.x * xs
+    ,   xy = this.x * ys
+    ,   xz = this.x * zs
+    ,   yy = this.y * ys
+    ,   yz = this.y * zs
+    ,   zz = this.z * zs
+
+    return new Mat4().set4x4r(
+        1 - (yy+zz), xy - wz,      xz + wy,     0,
+        xy + wz,     1 - (xx+zz ), yz - wx,     0,
+        xz - wy,     yz + wx,      1 - (xx+yy), 0,
+        0,           0,            0,           1
+    )
+}
+
+
 Quat.prototype.dup = function(){
     return new Quat().set(this.x, this.y, this.z, this.w)
 }
+
 
 exports.Quat = Quat

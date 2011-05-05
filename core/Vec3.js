@@ -18,7 +18,6 @@ Vec3.prototype.setVec3 = function(v){
 }
 
 
-// Cross product, this = a x b.
 Vec3.prototype.cross2 = function(a, b){
     var ax = a.x, ay = a.y, az = a.z,
         bx = b.x, by = b.y, bz = b.z;
@@ -30,18 +29,15 @@ Vec3.prototype.cross2 = function(a, b){
     return this;
 }
 
-// Cross product, this = this x b.
 Vec3.prototype.cross = function(b){
     return this.cross2(this, b);
 }
 
-// Returns the dot product, this . b.
 Vec3.prototype.dot = function(b){
     return this.x * b.x + this.y * b.y + this.z * b.z;
 }
 
 
-// Add two Vec3s, this = a + b.
 Vec3.prototype.add2 = function(a, b){
     this.x = a.x + b.x;
     this.y = a.y + b.y;
@@ -56,7 +52,6 @@ Vec3.prototype.added2 = function(a, b){
                     a.z + b.z);
 }
 
-// Add a Vec3, this = this + b.
 Vec3.prototype.add = function(b){
     return this.add2(this, b);
 }
@@ -81,7 +76,6 @@ Vec3.prototype.subbed2 = function(a, b){
                     a.z - b.z);
 }
 
-// Subtract another Vec3, this = this - b.
 Vec3.prototype.sub = function(b){
     return this.sub2(this, b);
 }
@@ -91,7 +85,6 @@ Vec3.prototype.subbed = function(b){
 }
 
 
-// Multiply two Vec3s, this = a * b.
 Vec3.prototype.mult2 = function(a, b){
     this.x = a.x * b.x;
     this.y = a.y * b.y;
@@ -106,7 +99,6 @@ Vec3.prototype.multed2 = function(a, b){
                     a.z * b.z);
 }
 
-// Multiply by another Vec3, this = this * b.
 Vec3.prototype.mult = function(b){
     return this.mult2(this, b);
 }
@@ -116,7 +108,6 @@ Vec3.prototype.multed = function(b){
 }
 
 
-// Multiply by a scalar.
 Vec3.prototype.scale = function(s){
     this.x *= s; this.y *= s; this.z *= s;
 
@@ -128,7 +119,6 @@ Vec3.prototype.scaled = function(s){
 }
 
 
-// Interpolate between this and another Vec3 |b|, based on |t|.
 Vec3.prototype.lerp = function(b, t){
     this.x = this.x + (b.x-this.x)*t;
     this.y = this.y + (b.y-this.y)*t;
@@ -144,19 +134,16 @@ Vec3.prototype.lerped = function(b, t){
 }
 
 
-// Magnitude (length).
 Vec3.prototype.length = function(){
     var x = this.x, y = this.y, z = this.z;
     return Math.sqrt(x*x + y*y + z*z);
 }
 
-// Magnitude squared.
 Vec3.prototype.lengthSquared = function(){
     var x = this.x, y = this.y, z = this.z;
     return x*x + y*y + z*z;
 }
 
-// Normalize, scaling so the magnitude is 1.  Invalid for a zero vector.
 Vec3.prototype.normalize = function(){
     return this.scale(1/this.length());
 }
@@ -168,11 +155,6 @@ Vec3.prototype.normalized = function(){
 
 Vec3.prototype.dup = function(){
     return new Vec3(this.x, this.y, this.z);
-}
-
-
-Vec3.prototype.debugString = function(){
-    return 'x: ' + this.x + ' y: ' + this.y + ' z: ' + this.z;
 }
 
 
