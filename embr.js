@@ -1,11 +1,11 @@
 var fs    = require('fs')
 ,   plask = require('plask')
 
-var Vec2  = require('./core/Vec2').Vec2
-,   Vec3  = require('./core/Vec3').Vec3
-,   Vec4  = require('./core/Vec4').Vec4
+var Vec2  = plask.Vec2
+,   Vec3  = plask.Vec3
+,   Vec4  = plask.Vec4
+,   Mat4  = plask.Mat4
 ,   Quat  = require('./core/Quat').Quat
-,   Mat4  = require('./core/Mat4').Mat4
 
 
 // Shader Loader
@@ -314,57 +314,82 @@ PingPong.prototype.swap = function(){
 // |attributes| an array of objects in the format:
 // [{ data: [], size: 3, location: 0 }]
 
-function makeVbo(gl, type, usage, attrs, indices){
-    var attributes = []
-    ,   has_indices = indices !== undefined
-    ,   num_indices = has_indices ? indices.length : Number.MAX_VALUE;
+function Vbo(gl, type, usage, attributes){
+    this.gl    = gl;
+    this.type  = type;
+    this.usage = usage;
 
-    for(var i = attrs.length; --i >= 0;){
-        var a = attrs[i];
-        if(!has_indices)
-            num_indices = Math.min(num_indices, a.data.length / a.size);
+    this.attributes = {};
+
+    var vbo = this;
+    function addAttr(name, target, data){
         var buffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(a.data), usage);
-        attributes.push({ buffer: buffer, size: a.size, location: a.location });
+        gl.bindBuffer(target, buffer);
+        gl.bufferData(target, data, usage);
+
+        var attr = attributes[name]
+        ,   size = attr.size !== undefined ? attr.size : 1;
+
+        vbo.attributes[name] = { buffer:   buffer
+                               , target:   target
+                               , size:     size
+                               , length:   Math.floor(data.length / size)
+                               , location: attr.location };
     }
 
-    if(has_indices)
-        indices = new Uint16Array(indices);
+    for(var name in attributes){
+        var attr = attributes[name];
+        if(name == "indices")
+            addAttr(name, gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(attr.data));
+        else
+            addAttr(name, gl.ARRAY_BUFFER, new Float32Array(attr.data));
+    }
 
-    return {
-        draw: function(){
-            for(var a, i = attributes.length; --i >= 0;){
-                a = attributes[i];
-                gl.bindBuffer(gl.ARRAY_BUFFER, a.buffer);
-                gl.vertexAttribPointer(a.location, a.size, gl.FLOAT, false, 0, 0);
-                gl.enableVertexAttribArray(a.location);
-            }
-            if(has_indices){
-                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer_index);
-                gl.drawElements(type, num_indices, gl.UNSIGNED_SHORT, 0);
-            }
-            else{
-                gl.drawArrays(type, 0, num_indices);
-            }
-        },
-        destroy: function(){
-            for(var i = attributes.length; --i >= 0;)
-                gl.deleteBuffer(attributes[i])
+    if(!this.attributes.indices){
+        this.length = Number.MAX_VALUE;
+        for(var name in this.attributes)
+            this.length = Math.min(this.length, this.attributes[name].length);
+    }
+}
+
+Vbo.prototype.draw = function(){
+    var gl = this.gl;
+
+    for(var name in this.attributes){
+        var attr = this.attributes[name];
+        if(attr.target == gl.ARRAY_BUFFER){
+            gl.bindBuffer(attr.target, attr.buffer);
+            gl.vertexAttribPointer(attr.location, attr.size, gl.FLOAT, false, 0, 0);
+            gl.enableVertexAttribArray(attr.location);
         }
-    };
+    }
+
+    var indices = this.attributes.indices;
+    if(indices){
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indices.buffer);
+        gl.drawElements(this.type, indices.length, gl.UNSIGNED_INT, 0);
+    }
+    else{
+        gl.drawArrays(this.type, 0, this.length);
+    }
+}
+
+Vbo.prototype.destroy = function(){
+    var gl = this.gl;
+    for(var i = attributes.length; --i >= 0;)
+        gl.deleteBuffer(attributes[i])
 }
 
 
 // Plane
 
 function makePlane(gl, x1, y1, x2, y2, loc_vtx, loc_txc){
-    var plane_verts = [ x1, y1, 0, x1, y2, 0, x2, y1, 0, x2, y2, 0 ];
-    var plane_texcs = [ 0, 0, 0, 1, 1, 0, 1, 1 ];
-    return makeVbo(gl, gl.TRIANGLE_STRIP, gl.STATIC_DRAW, [
-        { data: plane_verts, size: 3, location: loc_vtx },
-        { data: plane_texcs, size: 2, location: loc_txc }
-    ]);
+    var vertices  = [ x1, y1, 0, x1, y2, 0, x2, y1, 0, x2, y2, 0 ];
+    var texcoords = [ 0, 0, 0, 1, 1, 0, 1, 1 ];
+    return new Vbo(gl, gl.TRIANGLE_STRIP, gl.STATIC_DRAW, {
+        vertices:  { data: vertices,  size: 3, location: loc_vtx },
+        texcoords: { data: texcoords, size: 2, location: loc_txc }
+    });
 };
 
 
@@ -399,11 +424,12 @@ function makeCube(gl, sx, sy, sz, loc_vtx, loc_nrm, loc_txc){
                    16,17,18,16,18,19,
                    20,21,22,20,22,23]
 
-    return makeVbo(gl, gl.TRIANGLES, gl.STATIC_DRAW, [
-        { data: vertices,  size: 3, location: loc_vtx },
-        { data: normals,   size: 3, location: loc_nrm },
-        { data: texcoords, size: 2, location: loc_txc }
-    ], indices)
+    return new Vbo(gl, gl.TRIANGLES, gl.STATIC_DRAW, {
+        vertices:  { data: vertices,  size: 3, location: loc_vtx },
+        normals:   { data: normals,   size: 3, location: loc_nrm },
+        texcoords: { data: texcoords, size: 2, location: loc_txc },
+        indices:   { data: indices }
+    })
 };
 
 
@@ -453,7 +479,7 @@ exports.makeTextureSkCanvas = makeTextureSkCanvas
 exports.makeFbo  = makeFbo
 exports.PingPong = PingPong
 
-exports.makeVbo   = makeVbo
+exports.Vbo = Vbo
 exports.makePlane = makePlane
 exports.makeCube  = makeCube
 

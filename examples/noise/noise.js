@@ -4,6 +4,7 @@ var fs = require('fs')
 
 plask.simpleWindow({
     settings: {
+        title:   "¡NoisE!",
         type:    "3d",
         width:   512,
         height:  512,
