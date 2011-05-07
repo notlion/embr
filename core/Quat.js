@@ -1,7 +1,7 @@
 // Quaternion
 
 
-var Mat4 = require('./Mat4').Mat4
+var Mat4 = require('plask').Mat4
 
 var kEpsilon = Math.pow(2, -24)
 
