@@ -9,10 +9,8 @@ var Vec2  = plask.Vec2
 
 
 // Shader Loader
-// Parses #include "source.glsl" where source.glsl is a filename previously
-// loaded via loadProgram() or makeProgram().
-// Allows vertex and fragment code to be in the same file if surrounded by
-// #ifdef VERTEX or FRAGMENT.
+// Parses #include "source.glsl" where source.glsl is a filename previously loaded via loadProgram() or makeProgram().
+// Allows vertex and fragment code to be in the same file if surrounded by #ifdef VERTEX or FRAGMENT.
 
 var kVertexShaderPrefix   = "#define VERTEX\n"
 ,   kFragmentShaderPrefix = "#define FRAGMENT\n"
@@ -147,6 +145,7 @@ function makeTexture(gl, width, height, data, fmt){
     ,   wrap_s     = fmt.wrap_s !== undefined ? fmt.wrap_s : gl.CLAMP_TO_EDGE
     ,   wrap_t     = fmt.wrap_t !== undefined ? fmt.wrap_t : gl.CLAMP_TO_EDGE
     ,   tex_data   = data !== undefined ? data : null;
+
     var obj = gl.createTexture();
     gl.bindTexture(target, obj);
     gl.texImage2D(target, 0, formati, width, height, 0, format, type, tex_data);
@@ -217,41 +216,51 @@ function makeTextureSkCanvas(gl, canvas, fmt){
 
 // Frame Buffer Object
 
-function makeFbo(gl, width, height, formats){
-    var tex_attachments = []
-    ,   render_attachments = []
-    ,   fbo = gl.createFramebuffer();
+function Fbo(gl, width, height, formats){
+    this.gl     = gl;
+    this.width  = width;
+    this.height = height;
 
-    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+    this.tex_attachments = []
+    this.render_attachments = []
+
+    this.handle = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.handle);
 
     for(var i = 0, n = formats.length, cai = 0; i < n; i++){
         var fmt = formats[i]
-        ,   target  = fmt.target !== undefined ? fmt.target : gl.TEXTURE_2D
+        ,   target  = fmt.target  !== undefined ? fmt.target  : gl.TEXTURE_2D
         ,   formati = fmt.formati !== undefined ? fmt.formati : gl.RGBA
-        ,   attach  = fmt.attach !== undefined ? fmt.attach : gl.COLOR_ATTACHMENT0 + cai++;
-        if(target == gl.RENDERBUFFER){
-            var rb = gl.createRenderbuffer();
-            gl.bindRenderbuffer(gl.RENDERBUFFER, rb);
+        ,   attach  = fmt.attach  !== undefined ? fmt.attach  : gl.COLOR_ATTACHMENT0 + cai++;
+
+        if(target == gl.RENDERBUFFER){ // Renderbuffer Attachment (Depth, etc)
+            var rb_handle = gl.createRenderbuffer();
+            gl.bindRenderbuffer(gl.RENDERBUFFER, rb_handle);
             gl.renderbufferStorage(target, formati, width, height);
-            gl.framebufferRenderbuffer(gl.FRAMEBUFFER, attach, target, rb);
-            render_attachments.push({ obj: rb });
+            gl.framebufferRenderbuffer(gl.FRAMEBUFFER, attach, target, rb_handle);
+
+            this.render_attachments.push({ handle: rb_handle });
         }
-        else{
-            var format     = fmt.format !== undefined ? fmt.format : gl.RGBA
-            ,   type       = fmt.type !== undefined ? fmt.type : gl.UNSIGNED_BYTE
+        else{ // Texture Attachment
+            var format     = fmt.format     !== undefined ? fmt.format     : gl.RGBA
+            ,   type       = fmt.type       !== undefined ? fmt.type       : gl.UNSIGNED_BYTE
             ,   filter_min = fmt.filter_min !== undefined ? fmt.filter_min : gl.NEAREST
             ,   filter_mag = fmt.filter_mag !== undefined ? fmt.filter_mag : gl.NEAREST
-            ,   wrap_s     = fmt.wrap_s !== undefined ? fmt.wrap_s : gl.CLAMP_TO_EDGE
-            ,   wrap_t     = fmt.wrap_t !== undefined ? fmt.wrap_t : gl.CLAMP_TO_EDGE
-            ,   tex = gl.createTexture();
-            gl.bindTexture(target, tex);
+            ,   wrap_s     = fmt.wrap_s     !== undefined ? fmt.wrap_s     : gl.CLAMP_TO_EDGE
+            ,   wrap_t     = fmt.wrap_t     !== undefined ? fmt.wrap_t     : gl.CLAMP_TO_EDGE
+
+            var tex_handle = gl.createTexture();
+            gl.bindTexture(target, tex_handle);
             gl.texImage2D(target, 0, formati, width, height, 0, format, type, null);
             gl.texParameteri(target, gl.TEXTURE_MIN_FILTER, filter_min);
             gl.texParameteri(target, gl.TEXTURE_MAG_FILTER, filter_mag);
             gl.texParameteri(target, gl.TEXTURE_WRAP_S, wrap_s);
             gl.texParameteri(target, gl.TEXTURE_WRAP_T, wrap_t);
-            gl.framebufferTexture2D(gl.FRAMEBUFFER, attach, target, tex, 0);
-            tex_attachments.push({ obj: tex, target: target, unit: gl.TEXTURE0 });
+            gl.framebufferTexture2D(gl.FRAMEBUFFER, attach, target, tex_handle, 0);
+
+            this.tex_attachments.push({ handle: tex_handle
+                                      , target: target
+                                      , unit:   gl.TEXTURE0 });
         }
     }
 
@@ -260,59 +269,69 @@ function makeFbo(gl, width, height, formats){
     }
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+}
 
-    return {
-        width:  width,
-        height: height,
-        obj:    fbo,
-        bind: function(){
-            gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-        },
-        unbind: function(){
-            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        },
-        bindTexture: function(i, unit){
-            var att = tex_attachments[i];
-            if(unit !== undefined)
-                att.unit = gl.TEXTURE0 + unit;
-            gl.activeTexture(att.unit);
-            gl.bindTexture(att.target, att.obj);
-        },
-        unbindTexture: function(i){
-            var att = tex_attachments[i];
-            gl.activeTexture(att.unit);
-            gl.bindTexture(att.target, null);
-        }
-    };
+Fbo.prototype.bind = function(){
+    var gl = this.gl;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.handle);
+}
+
+Fbo.prototype.unbind = function(){
+    var gl = this.gl;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+}
+
+Fbo.prototype.bindTexture = function(i, unit){
+    var gl  = this.gl
+    ,   att = this.tex_attachments[i];
+    if(unit !== undefined)
+        att.unit = gl.TEXTURE0 + unit;
+    gl.activeTexture(att.unit);
+    gl.bindTexture(att.target, att.handle);
+}
+
+Fbo.prototype.unbindTexture = function(i){
+    var gl  = this.gl
+    ,   att = this.tex_attachments[i];
+    gl.activeTexture(att.unit);
+    gl.bindTexture(att.target, null);
 }
 
 
 // Ping-Pong
-// Two swappable framebuffers. Used for feedback effects and GPGPU where it's
-// necessary to access the state of the last iteration.
+// Two swappable framebuffers. Used for feedback effects and GPGPU where it's necessary to access the state of the last iteration.
 
 function PingPong(gl, width, height, formats){
-    this.wbuffer = makeFbo(gl, width, height, formats);
-    this.rbuffer = makeFbo(gl, width, height, formats);
+    this.wbuffer = new Fbo(gl, width, height, formats);
+    this.rbuffer = new Fbo(gl, width, height, formats);
     this.swap();
 }
+
 PingPong.prototype.swap = function(){
     var tmp = this.wbuffer;
     this.wbuffer = this.rbuffer;
     this.rbuffer = tmp;
+}
 
-    this.bind   = this.wbuffer.bind;
-    this.unbind = this.wbuffer.unbind;
-    this.bindTexture   = this.rbuffer.bindTexture;
-    this.unbindTexture = this.rbuffer.unbindTexture;
-};
+PingPong.prototype.bind = function(){
+    this.wbuffer.bind();
+}
+PingPong.prototype.unbind = function(){
+    this.wbuffer.unbind();
+}
+
+PingPong.prototype.bindTexture = function(){
+    this.rbuffer.bindTexture.apply(this.rbuffer, arguments);
+}
+PingPong.prototype.unbindTexture = function(){
+    this.rbuffer.unbindTexture.apply(this.rbuffer, arguments);
+}
 
 
 // Vertex Buffer Object
 // |type| gl.POINTS, gl.TRIANGLES etc..
 // |usage| gl.STATIC_DRAW, gl.STREAM_DRAW or gl.DYNAMIC_DRAW
-// |attributes| an array of objects in the format:
-// [{ data: [], size: 3, location: 0 }]
+// |attributes| an array of objects in the format: [{ data: [], size: 3, location: 0 }]
 
 function Vbo(gl, type, usage, attributes){
     this.gl    = gl;
@@ -476,7 +495,7 @@ exports.MagicProgram = MagicProgram
 exports.makeTexture         = makeTexture
 exports.makeTextureSkCanvas = makeTextureSkCanvas
 
-exports.makeFbo  = makeFbo
+exports.Fbo      = Fbo
 exports.PingPong = PingPong
 
 exports.Vbo = Vbo
