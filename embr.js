@@ -1,11 +1,11 @@
 var fs    = require('fs')
-,   plask = require('plask')
+,   plask = require('plask');
 
-var Vec2  = plask.Vec2
-,   Vec3  = plask.Vec3
-,   Vec4  = plask.Vec4
-,   Mat4  = plask.Mat4
-,   Quat  = require('./core/Quat').Quat
+var Vec2 = plask.Vec2
+,   Vec3 = plask.Vec3
+,   Vec4 = plask.Vec4
+,   Mat4 = plask.Mat4
+,   Quat = require('./core/Quat').Quat;
 
 
 // Shader Loader
@@ -29,52 +29,39 @@ function processShaderIncludes(src){
     return src;
 }
 
-function loadProgram(filename) {
+function loadProgram(filename){
     var src = processShaderIncludes(fs.readFileSync(filename, 'utf8'));
     programs[filename] = src;
-};
+}
 
-function makeProgram(gl, filename) {
+function Program(gl, filename){
+    this.gl = gl;
+
     var src = processShaderIncludes(fs.readFileSync(filename, 'utf8'));
     programs[filename] = src;
 
-    var vshader = gl.createShader(gl.VERTEX_SHADER);
+    var vshader = this.vshader = gl.createShader(gl.VERTEX_SHADER);
     gl.shaderSource(vshader, kVertexShaderPrefix + src);
     gl.compileShader(vshader);
     if(gl.getShaderParameter(vshader, gl.COMPILE_STATUS) !== true)
         throw gl.getShaderInfoLog(vshader);
 
-    var fshader = gl.createShader(gl.FRAGMENT_SHADER);
+    var fshader = this.fshader = gl.createShader(gl.FRAGMENT_SHADER);
     gl.shaderSource(fshader, kFragmentShaderPrefix + src);
     gl.compileShader(fshader);
     if(gl.getShaderParameter(fshader, gl.COMPILE_STATUS) !== true)
         throw gl.getShaderInfoLog(fshader);
 
-    var prog = gl.createProgram();
-    gl.attachShader(prog, vshader);
-    gl.attachShader(prog, fshader);
-    gl.linkProgram(prog);
-    if(gl.getProgramParameter(prog, gl.LINK_STATUS) !== true)
-        throw gl.getProgramInfoLog(prog);
-
-    return prog;
-};
-
-
-// Magic Program taken from Dean McNamee's PreGL
-// https://github.com/deanm/pregl
-
-function MagicProgram(gl, program){
-    this.gl = gl;
-    this.program = program;
-
-    this.useProgram = function(){
-        gl.useProgram(program);
-    };
+    var handle = this.handle = gl.createProgram();
+    gl.attachShader(handle, vshader);
+    gl.attachShader(handle, fshader);
+    gl.linkProgram(handle);
+    if(gl.getProgramParameter(handle, gl.LINK_STATUS) !== true)
+        throw gl.getProgramInfoLog(handle);
 
     function makeSetter(type, loc){
         switch(type){
-            case gl.BOOL:  // NOTE: bool could be set with 1i or 1f.
+            case gl.BOOL:
             case gl.INT:
             case gl.SAMPLER_2D:
             case gl.SAMPLER_CUBE:
@@ -103,31 +90,33 @@ function MagicProgram(gl, program){
                 return function(mat4){
                     gl.uniformMatrix4fv(loc, false, mat4.toFloat32Array());
                 };
-            default:
-            break;
         }
         return function(){
-            throw "MagicProgram doesn't know how to set type: " + type;
+            throw "Unknown uniform type: " + type;
         };
     }
 
-    var num_uniforms = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
-    for(var i = 0; i < num_uniforms; ++i){
-        var info = gl.getActiveUniform(program, i);
-        var name = info.name;
-        var loc = gl.getUniformLocation(program, name);
-        this['set_' + name] = makeSetter(info.type, loc);
-        this['loc_' + name] = loc;
+    // Create Uniform Setters / Getters
+    var nu = gl.getProgramParameter(handle, gl.ACTIVE_UNIFORMS);
+    for(var i = 0; i < nu; i++){
+        var info = gl.getActiveUniform(handle, i);
+        var loc  = gl.getUniformLocation(handle, info.name);
+        this['set_' + info.name] = makeSetter(info.type, loc);
+        this['loc_' + info.name] = loc;
     }
 
-    var num_attribs = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
-    for(var i = 0; i < num_attribs; ++i){
-        var info = gl.getActiveAttrib(program, i);
-        var name = info.name;
-        var loc = gl.getAttribLocation(program, name);
-        this['loc_' + name] = loc;
+    // Create Attribute Setters / Getters
+    var na = gl.getProgramParameter(handle, gl.ACTIVE_ATTRIBUTES);
+    for(var i = 0; i < na; i++){
+        var info = gl.getActiveAttrib(handle, i);
+        var loc  = gl.getAttribLocation(handle, info.name);
+        this['loc_' + info.name] = loc;
     }
-};
+}
+
+Program.prototype.use = function(){
+    this.gl.useProgram(this.handle);
+}
 
 
 // Texture
@@ -488,9 +477,8 @@ exports.Vec4 = Vec4
 exports.Quat = Quat
 exports.Mat4 = Mat4
 
-exports.loadProgram  = loadProgram
-exports.makeProgram  = makeProgram
-exports.MagicProgram = MagicProgram
+exports.loadProgram = loadProgram
+exports.Program     = Program
 
 exports.makeTexture         = makeTexture
 exports.makeTextureSkCanvas = makeTextureSkCanvas

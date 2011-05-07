@@ -21,7 +21,7 @@ plask.simpleWindow({
 
         // Make Shaders
         em.loadProgram("noise3D.glsl");
-        this.prog_noise = new em.MagicProgram(gl, em.makeProgram(gl, "noise.glsl"));
+        this.prog_noise = new em.Program(gl, "noise.glsl");
 
         // Make Plane (for rendering FBOs)
         this.plane = em.makePlane(gl, 0, 0, 1, 1, this.prog_noise.loc_a_pos,
@@ -32,10 +32,10 @@ plask.simpleWindow({
     {
         var gl = this.gl;
 
-        var p = this.prog_noise;
-        p.useProgram();
-        p.set_u_mvp(this.projection);
-        p.set_u_time(this.frametime);
+        var prog = this.prog_noise;
+        prog.use();
+        prog.set_u_mvp(this.projection);
+        prog.set_u_time(this.frametime);
         this.plane.draw();
     }
 });

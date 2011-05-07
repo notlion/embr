@@ -25,7 +25,7 @@ plask.simpleWindow({
         gl.enable(gl.DEPTH_TEST)
 
         // Make Shader
-        this.prog = new em.MagicProgram(gl, em.makeProgram(gl, "cube.glsl"));
+        this.prog = new em.Program(gl, "cube.glsl");
 
         // Make Cube
         this.cube = em.makeCube(gl, 1, 1, 1, this.prog.loc_a_position,
@@ -44,7 +44,7 @@ plask.simpleWindow({
         this.modelview.rotate(Math.cos(this.frametime) * 0.07, 1, 0, 0);
 
         var prog = this.prog;
-        prog.useProgram();
+        prog.use();
         prog.set_u_modelview(this.modelview);
         prog.set_u_projection(this.projection);
 
