@@ -1,6 +1,6 @@
 var fs = require('fs')
 ,   plask = require('plask')
-,   em = require('../../embr');
+,   em = require('../../embr-plask');
 
 plask.simpleWindow({
     settings: {
@@ -28,9 +28,9 @@ plask.simpleWindow({
         this.prog = new em.Program(gl, "cube.glsl");
 
         // Make Cube
-        this.cube = em.makeCube(gl, 1, 1, 1, this.prog.loc_a_position,
-                                             this.prog.loc_a_normal,
-                                             this.prog.loc_a_texcoord);
+        this.cube = em.Vbo.makeCube(gl, 1, 1, 1, this.prog.loc_a_position,
+                                                 this.prog.loc_a_normal,
+                                                 this.prog.loc_a_texcoord);
     },
 
     draw: function()

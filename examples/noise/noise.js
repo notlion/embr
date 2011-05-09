@@ -1,6 +1,6 @@
 var fs = require('fs')
 ,   plask = require('plask')
-,   em = require('../../embr');
+,   em = require('../../embr-plask');
 
 plask.simpleWindow({
     settings: {
@@ -20,12 +20,12 @@ plask.simpleWindow({
         this.projection = new plask.Mat4().ortho(0, 1, 0, 1, -1, 1);
 
         // Make Shaders
-        em.loadProgram("noise3D.glsl");
+        em.Program.loadSource("noise3D.glsl");
         this.prog_noise = new em.Program(gl, "noise.glsl");
 
         // Make Plane (for rendering FBOs)
-        this.plane = em.makePlane(gl, 0, 0, 1, 1, this.prog_noise.loc_a_pos,
-                                                  this.prog_noise.loc_a_texc);
+        this.plane = em.Vbo.makePlane(gl, 0, 0, 1, 1, this.prog_noise.loc_a_pos,
+                                                      this.prog_noise.loc_a_texc);
     },
 
     draw: function()

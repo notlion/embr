@@ -1,6 +1,6 @@
-var fs = require('fs')
+ var fs = require('fs')
 ,   plask = require('plask')
-,   em = require('../../embr');
+,   em = require('../../embr-plask');
 
 plask.simpleWindow({
     settings: {
@@ -20,7 +20,7 @@ plask.simpleWindow({
         this.projection = new plask.Mat4().ortho(-1, 1, -1, 1, -1, 1);
 
         // Make Shaders
-        em.loadProgram("noise3D.glsl");
+        em.Program.loadSource("noise3D.glsl");
         this.smear_prog = new em.Program(gl, "smear.glsl");
         this.tex_prog   = new em.Program(gl, "texture.glsl");
         this.color_prog = new em.Program(gl, "color.glsl");
@@ -32,11 +32,11 @@ plask.simpleWindow({
         ]);
 
         // Make Plane
-        this.plane = em.makePlane(gl, -1, -1, 1, 1, this.smear_prog.loc_a_position,
+        this.plane = em.Vbo.makePlane(gl, -1, -1, 1, 1, this.smear_prog.loc_a_position,
                                                     this.smear_prog.loc_a_texcoord);
 
         // Make Brush (todo: somehow this is broken)
-        this.cube = em.makeCube(gl, 0.1, 0.1, 0.1, this.color_prog.loc_a_position);
+        this.cube = em.Vbo.makeCube(gl, 0.1, 0.1, 0.1, this.color_prog.loc_a_position);
     },
 
     draw: function()
