@@ -25,7 +25,7 @@ plask.simpleWindow({
         gl.enable(gl.DEPTH_TEST)
 
         // Make Shader
-        this.prog = new em.Program(gl, "cube.glsl");
+        this.prog = new em.Program(gl, fs.readFileSync("cube.glsl", "utf8"));
 
         // Make Cube
         this.cube = em.Vbo.makeCube(gl, 1, 1, 1, this.prog.loc_a_position,

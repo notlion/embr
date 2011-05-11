@@ -20,8 +20,8 @@ plask.simpleWindow({
         this.projection = new plask.Mat4().ortho(0, 1, 0, 1, -1, 1);
 
         // Make Shaders
-        em.Program.loadSource("noise3D.glsl");
-        this.prog_noise = new em.Program(gl, "noise.glsl");
+        em.Program.include("noise3D.glsl", fs.readFileSync("noise3D.glsl", "utf8"));
+        this.prog_noise = new em.Program(gl, fs.readFileSync("noise.glsl", "utf8"));
 
         // Make Plane (for rendering FBOs)
         this.plane = em.Vbo.makePlane(gl, 0, 0, 1, 1, this.prog_noise.loc_a_pos,

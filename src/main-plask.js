@@ -13,7 +13,3 @@ Embr.Vec2 = plask.Vec2;
 Embr.Vec3 = plask.Vec3;
 Embr.Vec4 = plask.Vec4;
 Embr.Mat4 = plask.Mat4;
-
-Embr.loadSource = function(filename){
-    return fs.readFileSync(filename, 'utf8');
-};

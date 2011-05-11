@@ -4,11 +4,12 @@
 
 Embr.Program = (function(){
 
-    var kVertexShaderPrefix   = "#define VERTEX\n"
-    ,   kFragmentShaderPrefix = "#define FRAGMENT\n"
+    var kShaderPrefix         = "#ifdef GL_ES\nprecision highp float;\n#endif\n"
+    ,   kVertexShaderPrefix   = kShaderPrefix + "#define VERTEX\n"
+    ,   kFragmentShaderPrefix = kShaderPrefix + "#define FRAGMENT\n"
     ,   program_cache = {};
 
-    function processShaderIncludes(src){
+    function processIncludes(src){
         var match, re = /^ *#include +"([\w\-\.]+)"/gm;
         while(match = re.exec(src)){
             var fn = match[1];
@@ -21,16 +22,14 @@ Embr.Program = (function(){
         return src;
     }
 
-    function loadSource(filename){
-        var src = processShaderIncludes(Embr.loadSource(filename));
-        program_cache[filename] = src;
-        return src;
+    function include(name, src){
+        program_cache[name] = src;
     }
 
-    function Program(gl, filename){
+    function Program(gl, src){
         this.gl = gl;
 
-        var src = loadSource(filename);
+        src = processIncludes(src);
 
         var vshader = this.vshader = gl.createShader(gl.VERTEX_SHADER);
         gl.shaderSource(vshader, kVertexShaderPrefix + src);
@@ -108,9 +107,9 @@ Embr.Program = (function(){
 
     Program.prototype.use = function(){
         this.gl.useProgram(this.handle);
-    }
+    };
 
-    Program.loadSource = loadSource;
+    Program.include = include;
 
     return Program;
 

@@ -13,21 +13,21 @@ Embr.PingPong = (function(){
         var tmp = this.wbuffer;
         this.wbuffer = this.rbuffer;
         this.rbuffer = tmp;
-    }
+    };
 
     PingPong.prototype.bind = function(){
         this.wbuffer.bind();
-    }
+    };
     PingPong.prototype.unbind = function(){
         this.wbuffer.unbind();
-    }
+    };
 
     PingPong.prototype.bindTexture = function(){
         this.rbuffer.bindTexture.apply(this.rbuffer, arguments);
-    }
+    };
     PingPong.prototype.unbindTexture = function(){
         this.rbuffer.unbindTexture.apply(this.rbuffer, arguments);
-    }
+    };
 
     return PingPong;
 

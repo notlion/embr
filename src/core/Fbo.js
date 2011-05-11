@@ -7,8 +7,8 @@ Embr.Fbo = (function(){
         this.width  = width;
         this.height = height;
 
-        this.tex_attachments = []
-        this.render_attachments = []
+        this.tex_attachments = [];
+        this.render_attachments = [];
 
         this.handle = gl.createFramebuffer();
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.handle);
@@ -60,12 +60,12 @@ Embr.Fbo = (function(){
     Fbo.prototype.bind = function(){
         var gl = this.gl;
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.handle);
-    }
+    };
 
     Fbo.prototype.unbind = function(){
         var gl = this.gl;
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    }
+    };
 
     Fbo.prototype.bindTexture = function(i, unit){
         var gl  = this.gl
@@ -74,14 +74,14 @@ Embr.Fbo = (function(){
             att.unit = gl.TEXTURE0 + unit;
         gl.activeTexture(att.unit);
         gl.bindTexture(att.target, att.handle);
-    }
+    };
 
     Fbo.prototype.unbindTexture = function(i){
         var gl  = this.gl
         ,   att = this.tex_attachments[i];
         gl.activeTexture(att.unit);
         gl.bindTexture(att.target, null);
-    }
+    };
 
     return Fbo;
 

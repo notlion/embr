@@ -1,6 +1,10 @@
 JS_FILES_PLASK = \
 	src/main-plask.js
 
+JS_FILES_WEBGL = \
+	src/main-webgl.js \
+	src/plask-utils.js
+
 JS_FILES = \
 	src/core/Fbo.js \
 	src/core/Math.js \
@@ -15,19 +19,24 @@ JS_COMPILER = \
 	java -jar util/compiler-20110502/compiler.jar \
 	--charset UTF-8
 
-all: embr-plask.min.js embr-plask.js
+all: embr-plask.js embr-webgl.js embr-webgl.min.js
 
 %.min.js: %.js
 	$(JS_COMPILER) < $^ > $@
-
-embr-plask.min.js: embr-plask.js
-	rm -f $@
-	$(JS_COMPILER) < embr-plask.js >> $@
 
 embr-plask.js: $(JS_FILES_PLASK) $(JS_FILES) Makefile
 	rm -f $@
 	cat $(JS_FILES_PLASK) $(JS_FILES) >> $@
 	chmod a-w $@
 
+embr-webgl.js: $(JS_FILES_WEBGL) $(JS_FILES) Makefile
+	rm -f $@
+	cat $(JS_FILES_WEBGL) $(JS_FILES) >> $@
+	chmod a-w $@
+
+embr-webgl.min.js: embr-webgl.js
+	rm -f $@
+	$(JS_COMPILER) < embr-webgl.js >> $@
+
 clean:
-	rm -rf embr-plask.js embr-plask.min.js
+	rm -rf embr-plask.js embr-webgl.js embr-webgl.min.js

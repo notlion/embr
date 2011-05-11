@@ -1,3 +1,5 @@
+// Math and Random Utilities
+
 Embr.Math = (function(){
 
     var kPI  = Math.PI;
@@ -14,6 +16,7 @@ Embr.Math = (function(){
         return max * 2 * Math.random() - max;
     }
 
+    // Random point on a sphere of radius
     function randVec3(radius){
         var phi      = Math.random() * k2PI;
         var costheta = Math.random() * 2 - 1;
@@ -21,8 +24,8 @@ Embr.Math = (function(){
         var rho = Math.sqrt(1 - costheta * costheta);
 
         return new Embr.Vec3( rho * Math.cos(phi) * radius
-                       , rho * Math.sin(phi) * radius
-                       , costheta * radius );
+                            , rho * Math.sin(phi) * radius
+                            , costheta * radius );
     }
 
     return {

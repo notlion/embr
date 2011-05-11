@@ -1,0 +1,110 @@
+<!DOCTYPE HTML>
+<html lang="en">
+
+<head>
+<title>embr - cube</title>
+<meta charset="utf-8">
+<style type="text/css">
+
+body {
+    background: #111;
+    color: #fff;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+}
+/*#glcanvas {
+    width: 100%;
+    height: 100%;
+}*/
+
+</style>
+</head>
+<body onload="init()">
+
+<script type="text/javascript" src="../../embr-webgl.js"></script>
+<script type="text/javascript">
+
+function init(){
+    var em = Embr;
+    em.run(document.getElementById("glcanvas"), {
+        init: function(){
+            this.framerate(60);
+
+            console.log(this.width, this.height);
+
+            this.projection = new em.Mat4().perspective(60, this.width / this.height, 0.01, 8);
+            this.modelview  = new em.Mat4().lookAt( 0, 0,-4,  // Eye Position
+                                                    0, 0, 0,  // Target Position
+                                                    0, 1, 0); // Up Vector
+
+            var gl = this.gl;
+            gl.enable(gl.DEPTH_TEST)
+
+            // Make Shader
+            this.prog = new em.Program(gl, document.getElementById("cube-prog").textContent);
+
+            // Make Cube
+            this.cube = em.Vbo.makeCube(gl, 1, 1, 1, this.prog.loc_a_position,
+                                                     this.prog.loc_a_normal,
+                                                     this.prog.loc_a_texcoord);
+        },
+        draw: function(){
+            var gl = this.gl
+
+            gl.clearColor(0,0,0,1);
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+            this.modelview.rotate(Math.sin(this.frametime) * 0.03, 0, 1, 0);
+            this.modelview.rotate(Math.cos(this.frametime) * 0.07, 1, 0, 0);
+
+            var prog = this.prog;
+            prog.use();
+            prog.set_u_modelview(this.modelview);
+            prog.set_u_projection(this.projection);
+
+            this.cube.draw();
+        }
+    });
+}
+
+</script>
+
+<script id="cube-prog" type="text/x-glsl">
+
+varying vec3 v_normal;
+varying vec2 v_texcoord;
+
+#ifdef VERTEX
+
+uniform mat4 u_modelview, u_projection;
+
+attribute vec3 a_position, a_normal;
+attribute vec2 a_texcoord;
+
+void main()
+{
+    v_texcoord = a_texcoord;
+    v_normal   = ((u_modelview * vec4(a_normal, 0.0)).xyz + 1.0) * 0.5;
+
+    gl_Position = u_projection * u_modelview * vec4(a_position, 1.0);
+}
+
+#endif
+#ifdef FRAGMENT
+
+void main()
+{
+    gl_FragColor = vec4(v_normal, 1.0);
+}
+
+#endif
+
+</script>
+
+<canvas id="glcanvas" width="512" height="512">
+Your browser doesn't appear to support the HTML5 <code>&lt;canvas&gt;</code> element.
+</canvas>
+
+</body>
+</html>
