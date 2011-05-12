@@ -6,12 +6,13 @@ JS_FILES_WEBGL = \
 	src/plask-utils.js
 
 JS_FILES = \
-	src/core/Fbo.js \
+	src/core/Util.js \
 	src/core/Math.js \
-	src/core/PingPong.js \
-	src/core/Program.js \
 	src/core/Quat.js \
 	src/core/Texture.js \
+	src/core/Fbo.js \
+	src/core/PingPong.js \
+	src/core/Program.js \
 	src/core/Vbo.js \
 	src/noise.js
 

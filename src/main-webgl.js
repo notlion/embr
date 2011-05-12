@@ -30,7 +30,7 @@ Embr.run = function(canvas, obj){
                 return;
 
             framerate_handle = setInterval(function(){
-                obj.draw();
+                obj._draw();
             }, 1000 / fps);
         }
 

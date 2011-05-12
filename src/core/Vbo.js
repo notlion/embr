@@ -19,6 +19,8 @@ Embr.Vbo = (function(){
             gl.bindBuffer(target, buffer);
             gl.bufferData(target, data, usage);
 
+            Embr.Util.glCheckErr(gl, "Error adding attribute '" + name + "'");
+
             var attr = attributes[name]
             ,   size = attr.size !== undefined ? attr.size : 1;
 
@@ -32,11 +34,12 @@ Embr.Vbo = (function(){
         for(var name in attributes){
             var attr = attributes[name];
             if(name == "indices")
-                addAttr(name, gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(attr.data));
+                addAttr(name, gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(attr.data));
             else
                 addAttr(name, gl.ARRAY_BUFFER, new Float32Array(attr.data));
         }
 
+        // If no indices are given we fall back to glDrawArrays
         if(!this.attributes.indices){
             this.length = Number.MAX_VALUE;
             for(var name in this.attributes)
@@ -59,11 +62,13 @@ Embr.Vbo = (function(){
         var indices = this.attributes.indices;
         if(indices){
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indices.buffer);
-            gl.drawElements(this.type, indices.length, gl.UNSIGNED_INT, 0);
+            gl.drawElements(this.type, indices.length, gl.UNSIGNED_SHORT, 0);
         }
         else{
             gl.drawArrays(this.type, 0, this.length);
         }
+
+        Embr.Util.glCheckErr(gl, "Error drawing Vbo");
     }
 
     Vbo.prototype.destroy = function(){
@@ -107,21 +112,21 @@ Embr.Vbo = (function(){
                          0,1, 1,1, 1,0, 0,0,
                          1,1, 1,0, 0,0, 0,1,
                          1,0, 0,0, 0,1, 1,1,
-                         1,0, 0,0, 0,1, 1,1]
+                         1,0, 0,0, 0,1, 1,1];
 
         var indices = [ 0, 1, 2, 0, 2, 3,
                         4, 5, 6, 4, 6, 7,
                         8, 9,10, 8,10,11,
                        12,13,14,12,14,15,
                        16,17,18,16,18,19,
-                       20,21,22,20,22,23]
+                       20,21,22,20,22,23];
 
         return new Embr.Vbo(gl, gl.TRIANGLES, gl.STATIC_DRAW, {
             vertices:  { data: vertices,  size: 3, location: loc_vtx },
             normals:   { data: normals,   size: 3, location: loc_nrm },
             texcoords: { data: texcoords, size: 2, location: loc_txc },
             indices:   { data: indices }
-        })
+        });
     }
 
     return Vbo;

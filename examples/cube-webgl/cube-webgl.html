@@ -31,18 +31,16 @@ function init(){
         init: function(){
             this.framerate(60);
 
-            console.log(this.width, this.height);
-
             this.projection = new em.Mat4().perspective(60, this.width / this.height, 0.01, 8);
             this.modelview  = new em.Mat4().lookAt( 0, 0,-4,  // Eye Position
                                                     0, 0, 0,  // Target Position
                                                     0, 1, 0); // Up Vector
 
             var gl = this.gl;
-            gl.enable(gl.DEPTH_TEST)
+            gl.enable(gl.DEPTH_TEST);
 
             // Make Shader
-            this.prog = new em.Program(gl, document.getElementById("cube-prog").textContent);
+            this.prog = new em.Program(gl, document.getElementById("cube-prog").innerHTML);
 
             // Make Cube
             this.cube = em.Vbo.makeCube(gl, 1, 1, 1, this.prog.loc_a_position,
@@ -50,7 +48,7 @@ function init(){
                                                      this.prog.loc_a_texcoord);
         },
         draw: function(){
-            var gl = this.gl
+            var gl = this.gl;
 
             gl.clearColor(0,0,0,1);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
