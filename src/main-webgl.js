@@ -19,8 +19,10 @@ Embr.run = function(canvas, obj){
         ].join(" | "));
 
         obj.gl = gl;
-        obj.width  = canvas.width;
-        obj.height = canvas.height;
+        obj.width  = canvas.width  = canvas.clientWidth;
+        obj.height = canvas.height = canvas.clientHeight;
+
+        gl.viewport(0, 0, obj.width, obj.height);
 
         var framerate_handle = null;
         obj.framerate = function(fps){
