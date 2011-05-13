@@ -501,7 +501,8 @@ Embr.Vbo = (function(){
 
         this.attributes = {};
 
-        var vbo = this;
+        var vbo = this
+        ,   loc_i = 0;
         function addAttr(name, target, data){
             var buffer = gl.createBuffer();
             gl.bindBuffer(target, buffer);
@@ -510,25 +511,29 @@ Embr.Vbo = (function(){
             Embr.Util.glCheckErr(gl, "Error adding attribute '" + name + "'");
 
             var attr = attributes[name]
-            ,   size = attr.size !== undefined ? attr.size : 1;
+            ,   size = attr.size !== undefined ? attr.size : 1
+            ,   location = attr.location;
+
+            if(attr.location === undefined && target === gl.ARRAY_BUFFER)
+                location = loc_i++;
 
             vbo.attributes[name] = { buffer:   buffer
                                    , target:   target
                                    , size:     size
                                    , length:   Math.floor(data.length / size)
-                                   , location: attr.location };
+                                   , location: location };
         }
 
         for(var name in attributes){
             var attr = attributes[name];
-            if(name == "indices")
+            if(name === "index")
                 addAttr(name, gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(attr.data));
             else
                 addAttr(name, gl.ARRAY_BUFFER, new Float32Array(attr.data));
         }
 
         // If no indices are given we fall back to glDrawArrays
-        if(!this.attributes.indices){
+        if(!this.attributes.index){
             this.length = Number.MAX_VALUE;
             for(var name in this.attributes)
                 this.length = Math.min(this.length, this.attributes[name].length);
@@ -547,10 +552,10 @@ Embr.Vbo = (function(){
             }
         }
 
-        var indices = this.attributes.indices;
-        if(indices){
-            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indices.buffer);
-            gl.drawElements(this.type, indices.length, gl.UNSIGNED_SHORT, 0);
+        var index = this.attributes.index;
+        if(index){
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, index.buffer);
+            gl.drawElements(this.type, index.length, gl.UNSIGNED_SHORT, 0);
         }
         else{
             gl.drawArrays(this.type, 0, this.length);
@@ -569,11 +574,11 @@ Embr.Vbo = (function(){
     // Plane
 
     Vbo.makePlane = function(gl, x1, y1, x2, y2, loc_vtx, loc_txc){
-        var vertices  = [ x1, y1, 0, x1, y2, 0, x2, y1, 0, x2, y2, 0 ];
+        var positions = [ x1, y1, 0, x1, y2, 0, x2, y1, 0, x2, y2, 0 ];
         var texcoords = [ 0, 0, 0, 1, 1, 0, 1, 1 ];
         return new Embr.Vbo(gl, gl.TRIANGLE_STRIP, gl.STATIC_DRAW, {
-            vertices:  { data: vertices,  size: 3, location: loc_vtx },
-            texcoords: { data: texcoords, size: 2, location: loc_txc }
+            position: { data: positions, size: 3 },
+            texcoord: { data: texcoords, size: 2 }
         });
     }
 
@@ -581,12 +586,12 @@ Embr.Vbo = (function(){
     // Cube
 
     Vbo.makeCube = function(gl, sx, sy, sz, loc_vtx, loc_nrm, loc_txc){
-        var vertices = [ sx, sy, sz,  sx,-sy, sz,  sx,-sy,-sz,  sx, sy,-sz,  // +X
-                         sx, sy, sz,  sx, sy,-sz, -sx, sy,-sz, -sx, sy, sz,  // +Y
-                         sx, sy, sz, -sx, sy, sz, -sx,-sy, sz,  sx,-sy, sz,  // +Z
-                        -sx, sy, sz, -sx, sy,-sz, -sx,-sy,-sz, -sx,-sy, sz,  // -X
-                        -sx,-sy,-sz,  sx,-sy,-sz,  sx,-sy, sz, -sx,-sy, sz,  // -Y
-                         sx,-sy,-sz, -sx,-sy,-sz, -sx, sy,-sz,  sx, sy,-sz]; // -Z
+        var positions = [ sx, sy, sz,  sx,-sy, sz,  sx,-sy,-sz,  sx, sy,-sz,  // +X
+                          sx, sy, sz,  sx, sy,-sz, -sx, sy,-sz, -sx, sy, sz,  // +Y
+                          sx, sy, sz, -sx, sy, sz, -sx,-sy, sz,  sx,-sy, sz,  // +Z
+                         -sx, sy, sz, -sx, sy,-sz, -sx,-sy,-sz, -sx,-sy, sz,  // -X
+                         -sx,-sy,-sz,  sx,-sy,-sz,  sx,-sy, sz, -sx,-sy, sz,  // -Y
+                          sx,-sy,-sz, -sx,-sy,-sz, -sx, sy,-sz,  sx, sy,-sz]; // -Z
 
         var normals = [ 1, 0, 0,  1, 0, 0,  1, 0, 0,  1, 0, 0,
                         0, 1, 0,  0, 1, 0,  0, 1, 0,  0, 1, 0,
@@ -610,10 +615,10 @@ Embr.Vbo = (function(){
                        20,21,22,20,22,23];
 
         return new Embr.Vbo(gl, gl.TRIANGLES, gl.STATIC_DRAW, {
-            vertices:  { data: vertices,  size: 3, location: loc_vtx },
-            normals:   { data: normals,   size: 3, location: loc_nrm },
-            texcoords: { data: texcoords, size: 2, location: loc_txc },
-            indices:   { data: indices }
+            position: { data: positions, size: 3 },
+            normal:   { data: normals,   size: 3 },
+            texcoord: { data: texcoords, size: 2 },
+            index:    { data: indices }
         });
     }
 

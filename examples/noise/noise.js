@@ -24,8 +24,9 @@ plask.simpleWindow({
         this.prog_noise = new em.Program(gl, fs.readFileSync("noise.glsl", "utf8"));
 
         // Make Plane (for rendering FBOs)
-        this.plane = em.Vbo.makePlane(gl, 0, 0, 1, 1, this.prog_noise.loc_a_pos,
-                                                      this.prog_noise.loc_a_texc);
+        this.plane = em.Vbo.makePlane(gl, 0, 0, 1, 1);
+        this.plane.attributes.position.location = this.prog_noise.loc_a_position;
+        this.plane.attributes.texcoord.location = this.prog_noise.loc_a_texcoor
     },
 
     draw: function()
@@ -34,7 +35,7 @@ plask.simpleWindow({
 
         var prog = this.prog_noise;
         prog.use();
-        prog.set_u_mvp(this.projection);
+        prog.set_u_mvp_matrix(this.projection);
         prog.set_u_time(this.frametime);
         this.plane.draw();
     }

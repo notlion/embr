@@ -28,9 +28,10 @@ plask.simpleWindow({
         this.prog = new em.Program(gl, fs.readFileSync("cube.glsl", "utf8"));
 
         // Make Cube
-        this.cube = em.Vbo.makeCube(gl, 1, 1, 1, this.prog.loc_a_position,
-                                                 this.prog.loc_a_normal,
-                                                 this.prog.loc_a_texcoord);
+        this.cube = em.Vbo.makeCube(gl, 1, 1, 1);
+        this.cube.attributes.position.location = this.prog.loc_a_position;
+        this.cube.attributes.normal.location   = this.prog.loc_a_normal;
+        this.cube.attributes.texcoord.location = this.prog.loc_a_texcoord;
     },
 
     draw: function()
