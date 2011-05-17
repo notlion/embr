@@ -72,8 +72,6 @@ Embr.Vbo = (function(){
         else{
             gl.drawArrays(this.type, 0, this.length);
         }
-
-        Embr.Util.glCheckErr(gl, "Error drawing Vbo");
     }
 
     Vbo.prototype.destroy = function(){

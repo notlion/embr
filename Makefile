@@ -9,12 +9,12 @@ JS_FILES = \
 	src/core/Util.js \
 	src/core/Math.js \
 	src/core/Quat.js \
+	src/core/Noise.js \
 	src/core/Texture.js \
 	src/core/Fbo.js \
 	src/core/PingPong.js \
 	src/core/Program.js \
-	src/core/Vbo.js \
-	src/noise.js
+	src/core/Vbo.js
 
 JS_COMPILER = \
 	java -jar util/compiler-20110502/compiler.jar \

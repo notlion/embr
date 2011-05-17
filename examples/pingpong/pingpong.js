@@ -39,6 +39,9 @@ plask.simpleWindow({
         // Make Brush (todo: somehow this is broken)
         this.cube = em.Vbo.makeCube(gl, 0.1, 0.1, 0.1);
         this.cube.attributes.position.location = this.color_prog.loc_a_position;
+
+        // gl.enable(gl.BLEND);
+        // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     },
 
     draw: function()
@@ -46,6 +49,7 @@ plask.simpleWindow({
         var gl = this.gl;
         var prog;
 
+        var time = this.frametime;
 
         // First Pass: Render to FBO
 
@@ -53,8 +57,9 @@ plask.simpleWindow({
 
         prog = this.smear_prog;
         prog.use();
-        prog.set_u_mvp_matrix(this.projection.dup().scale(1.02, 1.02, 1.02));
-        prog.set_u_time(this.frametime / 2);
+        var r = em.Noise.sn2(0, time / 10) * 0.1;
+        prog.set_u_mvp_matrix(this.projection.dup().rotate(r, 0,0,1).scale(1.04, 1.04, 1.04));
+        prog.set_u_time(this.frametime / 4);
         prog.set_u_scale(0.01);
         prog.set_u_tex(0);
 
@@ -65,8 +70,7 @@ plask.simpleWindow({
         prog = this.color_prog;
         prog.use();
         prog.set_u_mvp_matrix(this.projection);
-        var color_time = this.frametime / 5;
-        prog.set_u_color(new em.Vec4(1, Math.sin(color_time), Math.cos(color_time), 1));
+        prog.set_u_color(new em.Vec4(Math.sin(time * 2), Math.sin(time * 3), Math.cos(time * 4), 0.25));
         this.cube.draw();
 
         this.pp.unbind();

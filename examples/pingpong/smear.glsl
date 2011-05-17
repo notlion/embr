@@ -29,12 +29,12 @@ varying vec2 v_texcoord;
     void main()
     {
         vec2 offset = vec2(
-            snoise(vec3(v_texcoord * 5.0, u_time)) * u_scale,
-            snoise(vec3(v_texcoord * 5.0 + vec2(0.0, 100.0), u_time)) * u_scale
+            snoise(vec3(v_texcoord * 3.0, u_time)) * u_scale,
+            snoise(vec3(v_texcoord * 3.0 + vec2(0.0, 100.0), u_time)) * u_scale
         );
 
         vec4 color = texture2D(u_tex, v_texcoord + offset);
-        color.rgb -= 3.0 / 255.0;
+        color.rgb -= 2.0 / 255.0;
 
         gl_FragColor = color;
     }
