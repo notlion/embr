@@ -48,14 +48,15 @@ function init(){
             this.cube.attributes.normal.location   = this.prog.loc_a_normal;
             this.cube.attributes.texcoord.location = this.prog.loc_a_texcoord;
         },
+        step: function(){
+            this.modelview.rotate(Math.sin(this.frametime) * 0.03, 0, 1, 0);
+            this.modelview.rotate(Math.cos(this.frametime) * 0.07, 1, 0, 0);
+        },
         draw: function(){
             var gl = this.gl;
 
             gl.clearColor(0,0,0,1);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-            this.modelview.rotate(Math.sin(this.frametime) * 0.03, 0, 1, 0);
-            this.modelview.rotate(Math.cos(this.frametime) * 0.07, 1, 0, 0);
 
             var prog = this.prog;
             prog.use();

@@ -24,19 +24,30 @@ Embr.run = function(canvas, obj){
 
         gl.viewport(0, 0, obj.width, obj.height);
 
-        var framerate_handle = null;
+        var requestAnimFrame = (function(){
+            return window.requestAnimationFrame       ||
+                   window.webkitRequestAnimationFrame ||
+                   window.mozRequestAnimationFrame    ||
+                   window.oRequestAnimationFrame      ||
+                   window.msRequestAnimationFrame     ||
+                   function(callback, element){
+                       window.setTimeout(callback, 1000 / 60);
+                   };
+        })();
+
+        var step_iterval_handle = null;
         obj.framerate = function(fps){
-            if(framerate_handle !== null)
-                clearInterval(framerate_handle);
+            if(step_iterval_handle !== null)
+                clearInterval(step_iterval_handle);
             if(fps === 0)
                 return;
 
-            framerate_handle = setInterval(function(){
-                obj._draw();
+            step_iterval_handle = setInterval(function(){
+                obj._step();
             }, 1000 / fps);
-        }
+        };
 
-        if("init" in obj){
+        if(obj.init){
             try{
                 obj.init();
             }
@@ -45,16 +56,27 @@ Embr.run = function(canvas, obj){
             }
         }
 
-        if("draw" in obj)
-            var draw = obj.draw;
-
         var frameid = 0;
         var frame_start_time = Date.now();
-        obj._draw = function(){
-            if(draw !== null){
-                obj.frameid = frameid;
+        var frame_dirty = true;
+        obj._step = function(){
+            if(obj.step){
+                obj.frameid   = frameid;
                 obj.frametime = (Date.now() - frame_start_time) / 1000; // Secs.
 
+                try{
+                    obj.step();
+                }
+                catch(e){
+                    console.error('Exception caught in step: ' + e);
+                }
+
+                frame_dirty = true;
+                frameid++;
+            }
+        };
+        obj._draw = function(){
+            if(obj.draw && frame_dirty){
                 try{
                     obj.draw();
                 }
@@ -62,10 +84,12 @@ Embr.run = function(canvas, obj){
                     console.error('Exception caught in draw: ' + e);
                 }
 
-                frameid++;
+                frame_dirty = false;
+                requestAnimFrame(obj._draw, canvas);
             }
         };
 
+        obj._step();
         obj._draw();
 
         return obj;
