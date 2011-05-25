@@ -40,7 +40,7 @@ function init(){
             gl.enable(gl.DEPTH_TEST);
 
             // Make Shader
-            this.prog = new em.Program(gl, document.getElementById("cube-prog").innerHTML);
+            this.prog = new em.Program(gl, document.getElementById("cube-prog").textContent);
 
             // Make Cube
             this.cube = em.Vbo.makeCube(gl, 1, 1, 1);

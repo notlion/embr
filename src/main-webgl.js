@@ -1,5 +1,17 @@
 var Embr = (Embr !== undefined) ? Embr : {};
 
+if(!window.requestAnimationFrame){
+    window.requestAnimationFrame = (function(){
+            return window.webkitRequestAnimationFrame ||
+                   window.mozRequestAnimationFrame    ||
+                   window.oRequestAnimationFrame      ||
+                   window.msRequestAnimationFrame     ||
+                   function(callback, element){
+                       window.setTimeout(callback, 1000 / 60);
+                   };
+    })();
+}
+
 Embr.run = function(canvas, obj){
     var gl = null;
     try{
@@ -23,17 +35,6 @@ Embr.run = function(canvas, obj){
         obj.height = canvas.height = canvas.clientHeight;
 
         gl.viewport(0, 0, obj.width, obj.height);
-
-        var requestAnimFrame = (function(){
-            return window.requestAnimationFrame       ||
-                   window.webkitRequestAnimationFrame ||
-                   window.mozRequestAnimationFrame    ||
-                   window.oRequestAnimationFrame      ||
-                   window.msRequestAnimationFrame     ||
-                   function(callback, element){
-                       window.setTimeout(callback, 1000 / 60);
-                   };
-        })();
 
         var step_iterval_handle = null;
         obj.framerate = function(fps){
@@ -85,8 +86,8 @@ Embr.run = function(canvas, obj){
                 }
 
                 frame_dirty = false;
-                requestAnimFrame(obj._draw, canvas);
             }
+            window.requestAnimationFrame(obj._draw, canvas);
         };
 
         obj._step();

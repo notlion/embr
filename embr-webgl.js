@@ -1,5 +1,17 @@
 var Embr = (Embr !== undefined) ? Embr : {};
 
+if(!window.requestAnimationFrame){
+    window.requestAnimationFrame = (function(){
+            return window.webkitRequestAnimationFrame ||
+                   window.mozRequestAnimationFrame    ||
+                   window.oRequestAnimationFrame      ||
+                   window.msRequestAnimationFrame     ||
+                   function(callback, element){
+                       window.setTimeout(callback, 1000 / 60);
+                   };
+    })();
+}
+
 Embr.run = function(canvas, obj){
     var gl = null;
     try{
@@ -23,17 +35,6 @@ Embr.run = function(canvas, obj){
         obj.height = canvas.height = canvas.clientHeight;
 
         gl.viewport(0, 0, obj.width, obj.height);
-
-        var requestAnimFrame = (function(){
-            return window.requestAnimationFrame       ||
-                   window.webkitRequestAnimationFrame ||
-                   window.mozRequestAnimationFrame    ||
-                   window.oRequestAnimationFrame      ||
-                   window.msRequestAnimationFrame     ||
-                   function(callback, element){
-                       window.setTimeout(callback, 1000 / 60);
-                   };
-        })();
 
         var step_iterval_handle = null;
         obj.framerate = function(fps){
@@ -85,8 +86,8 @@ Embr.run = function(canvas, obj){
                 }
 
                 frame_dirty = false;
-                requestAnimFrame(obj._draw, canvas);
             }
+            window.requestAnimationFrame(obj._draw, canvas);
         };
 
         obj._step();
@@ -760,24 +761,23 @@ Embr.Util = (function(){
 
 })();// Math and Random Utilities
 
-Embr.Math = (function(){
+Embr.rand = function(min, max){
+    return min + Math.random() * (max - min);
+};
 
-    var kPI  = Math.PI;
-    var kPI2 = Math.PI / 2;
-    var kPI4 = Math.PI / 4;
-    var k2PI = Math.PI * 2;
+Embr.randSym = function(max){
+    return max * 2 * Math.random() - max;
+};
 
+(function(){
 
-    function rand(min, max){
-        return min + Math.random() * (max - min);
-    }
-
-    function randSym(max){
-        return max * 2 * Math.random() - max;
-    }
+    var kPI  = Embr.kPI  = Math.PI;
+    var kPI2 = Embr.kPI2 = Math.PI / 2;
+    var kPI4 = Embr.kPI4 = Math.PI / 4;
+    var k2PI = Embr.k2PI = Math.PI * 2;
 
     // Random point on a sphere of radius
-    function randVec3(radius){
+    Embr.randVec3 = function(radius){
         var phi      = Math.random() * k2PI;
         var costheta = Math.random() * 2 - 1;
 
@@ -786,17 +786,6 @@ Embr.Math = (function(){
         return new Embr.Vec3( rho * Math.cos(phi) * radius
                             , rho * Math.sin(phi) * radius
                             , costheta * radius );
-    }
-
-    return {
-        kPI:  kPI,
-        kPI2: kPI2,
-        kPI4: kPI4,
-        k2PI: k2PI,
-
-        rand:     rand,
-        randSym:  randSym,
-        randVec3: randVec3
     };
 
 })();
