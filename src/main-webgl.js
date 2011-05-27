@@ -31,8 +31,8 @@ Embr.run = function(canvas, obj){
         ].join(" | "));
 
         obj.gl = gl;
-        obj.width  = canvas.width  = canvas.clientWidth;
-        obj.height = canvas.height = canvas.clientHeight;
+        obj.width  = canvas.width  = canvas.offsetWidth;
+        obj.height = canvas.height = canvas.offsetHeight;
 
         gl.viewport(0, 0, obj.width, obj.height);
 
