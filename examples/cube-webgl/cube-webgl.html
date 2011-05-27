@@ -48,8 +48,6 @@ function init(){
             this.cube = em.Vbo.makeCube(gl, 1, 1, 1);
             this.cube.attributes.position.location = this.prog.loc_a_position;
             this.cube.attributes.normal.location   = this.prog.loc_a_normal;
-
-            console.log(this)
         },
         step: function(){
             this.modelview.rotate(Math.sin(this.frametime) * 0.03, 0, 1, 0);
