@@ -1,6 +1,10 @@
 // Math and Random Utilities
 
-Embr.rand = function(min, max){
+Embr.rand = function(max){
+    return Math.random() * max;
+};
+
+Embr.rand2 = function(min, max){
     return min + Math.random() * (max - min);
 };
 
