@@ -39,14 +39,11 @@ function init(){
             var gl = this.gl;
             gl.enable(gl.DEPTH_TEST);
 
-            // Make Shader
-            this.prog = new em.Program(gl, document.getElementById("cube-prog").textContent);
+            this.material = new em.NormalMaterial(gl);
 
             // Make Cube
             this.cube = em.Vbo.makeCube(gl, 1, 1, 1);
-            this.cube.attributes.position.location = this.prog.loc_a_position;
-            this.cube.attributes.normal.location   = this.prog.loc_a_normal;
-            this.cube.attributes.texcoord.location = this.prog.loc_a_texcoord;
+            this.material.assignLocations(this.cube);
         },
         step: function(){
             this.modelview.rotate(Math.sin(this.frametime) * 0.03, 0, 1, 0);
@@ -58,47 +55,15 @@ function init(){
             gl.clearColor(0,0,0,1);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-            var prog = this.prog;
-            prog.use();
-            prog.set_u_modelview(this.modelview);
-            prog.set_u_projection(this.projection);
+            // var prog = this.prog;
+            this.material.use();
+            this.material.setModelview(this.modelview);
+            this.material.setProjection(this.projection);
 
             this.cube.draw();
         }
     });
 }
-
-</script>
-
-<script id="cube-prog" type="text/x-glsl">
-
-varying vec3 v_normal;
-varying vec2 v_texcoord;
-
-#ifdef VERTEX
-
-uniform mat4 u_modelview, u_projection;
-
-attribute vec3 a_position, a_normal;
-attribute vec2 a_texcoord;
-
-void main()
-{
-    v_texcoord = a_texcoord;
-    v_normal   = ((u_modelview * vec4(a_normal, 0.0)).xyz + 1.0) * 0.5;
-
-    gl_Position = u_projection * u_modelview * vec4(a_position, 1.0);
-}
-
-#endif
-#ifdef FRAGMENT
-
-void main()
-{
-    gl_FragColor = vec4(v_normal, 1.0);
-}
-
-#endif
 
 </script>
 

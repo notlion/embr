@@ -761,7 +761,11 @@ Embr.Util = (function(){
 
 })();// Math and Random Utilities
 
-Embr.rand = function(min, max){
+Embr.rand = function(max){
+    return Math.random() * max;
+};
+
+Embr.rand2 = function(min, max){
     return min + Math.random() * (max - min);
 };
 
@@ -1284,122 +1288,7 @@ Embr.PingPong = (function(){
     return PingPong;
 
 })();
-// GLSL Shader Loader
-// Parses #include "source.glsl" where source.glsl is a filename previously loaded via loadProgram() or makeProgram().
-// Allows vertex and fragment code to be in the same file if surrounded by #ifdef VERTEX or FRAGMENT.
-
-Embr.Program = (function(){
-
-    var kShaderPrefix         = "#ifdef GL_ES\nprecision highp float;\n#endif\n"
-    ,   kVertexShaderPrefix   = kShaderPrefix + "#define VERTEX\n"
-    ,   kFragmentShaderPrefix = kShaderPrefix + "#define FRAGMENT\n"
-    ,   program_cache = {};
-
-    function processIncludes(src){
-        var match, re = /^ *#include +"([\w\-\.]+)"/gm;
-        while(match = re.exec(src)){
-            var fn = match[1];
-            if(fn in program_cache){
-                var incl_src = program_cache[fn];
-                src = src.replace(new RegExp(match[0]), incl_src);
-                re.lastIndex = match.index + incl_src.length;
-            }
-        }
-        return src;
-    }
-
-    function include(name, src){
-        program_cache[name] = src;
-    }
-
-    function Program(gl, src){
-        this.gl = gl;
-
-        src = processIncludes(src);
-
-        var vshader = this.vshader = gl.createShader(gl.VERTEX_SHADER);
-        gl.shaderSource(vshader, kVertexShaderPrefix + src);
-        gl.compileShader(vshader);
-        if(gl.getShaderParameter(vshader, gl.COMPILE_STATUS) !== true)
-            throw gl.getShaderInfoLog(vshader);
-
-        var fshader = this.fshader = gl.createShader(gl.FRAGMENT_SHADER);
-        gl.shaderSource(fshader, kFragmentShaderPrefix + src);
-        gl.compileShader(fshader);
-        if(gl.getShaderParameter(fshader, gl.COMPILE_STATUS) !== true)
-            throw gl.getShaderInfoLog(fshader);
-
-        var handle = this.handle = gl.createProgram();
-        gl.attachShader(handle, vshader);
-        gl.attachShader(handle, fshader);
-        gl.linkProgram(handle);
-        if(gl.getProgramParameter(handle, gl.LINK_STATUS) !== true)
-            throw gl.getProgramInfoLog(handle);
-
-        function makeSetter(type, loc){
-            switch(type){
-                case gl.BOOL:
-                case gl.INT:
-                case gl.SAMPLER_2D:
-                case gl.SAMPLER_CUBE:
-                    return function(value){
-                        gl.uniform1i(loc, value);
-                        return this;
-                    };
-                case gl.FLOAT:
-                    return function(value){
-                        gl.uniform1f(loc, value);
-                        return this;
-                    };
-                case gl.FLOAT_VEC2:
-                    return function(v){
-                        gl.uniform2f(loc, v.x, v.y);
-                    };
-                case gl.FLOAT_VEC3:
-                    return function(v){
-                        gl.uniform3f(loc, v.x, v.y, v.z);
-                    };
-                case gl.FLOAT_VEC4:
-                    return function(v){
-                        gl.uniform4f(loc, v.x, v.y, v.z, v.w);
-                    };
-                case gl.FLOAT_MAT4:
-                    return function(mat4){
-                        gl.uniformMatrix4fv(loc, false, mat4.toFloat32Array());
-                    };
-            }
-            return function(){
-                throw "Unknown uniform type: " + type;
-            };
-        }
-
-        // Create Uniform Setters / Getters
-        var nu = gl.getProgramParameter(handle, gl.ACTIVE_UNIFORMS);
-        for(var i = 0; i < nu; i++){
-            var info = gl.getActiveUniform(handle, i);
-            var loc  = gl.getUniformLocation(handle, info.name);
-            this['set_' + info.name] = makeSetter(info.type, loc);
-            this['loc_' + info.name] = loc;
-        }
-
-        // Create Attribute Setters / Getters
-        var na = gl.getProgramParameter(handle, gl.ACTIVE_ATTRIBUTES);
-        for(var i = 0; i < na; i++){
-            var info = gl.getActiveAttrib(handle, i);
-            var loc  = gl.getAttribLocation(handle, info.name);
-            this['loc_' + info.name] = loc;
-        }
-    }
-
-    Program.prototype.use = function(){
-        this.gl.useProgram(this.handle);
-    };
-
-    Program.include = include;
-
-    return Program;
-
-})();// Vertex Buffer Object
+// Vertex Buffer Object
 
 Embr.Vbo = (function(){
 
@@ -1534,5 +1423,208 @@ Embr.Vbo = (function(){
     }
 
     return Vbo;
+
+})();Embr.Program = (function(){
+
+    var kShaderPrefix = "#ifdef GL_ES\nprecision highp float;\n#endif\n";
+
+
+    function Program(gl, src_vertex, src_fragment){
+        this.gl = gl;
+
+        var sv = this.shader_vert = gl.createShader(gl.VERTEX_SHADER);
+        gl.shaderSource(sv, kShaderPrefix + src_vertex);
+        gl.compileShader(sv);
+        if(gl.getShaderParameter(sv, gl.COMPILE_STATUS) !== true)
+            throw gl.getShaderInfoLog(sv);
+
+        var sf = this.shader_frag = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(sf, kShaderPrefix + src_fragment);
+        gl.compileShader(sf);
+        if(gl.getShaderParameter(sf, gl.COMPILE_STATUS) !== true)
+            throw gl.getShaderInfoLog(sf);
+
+        this.handle = gl.createProgram();
+    }
+
+    Program.prototype.link = function(){
+        var gl     = this.gl
+        ,   handle = this.handle;
+        gl.attachShader(handle, this.shader_vert);
+        gl.attachShader(handle, this.shader_frag);
+        gl.linkProgram(handle);
+        if(gl.getProgramParameter(handle, gl.LINK_STATUS) !== true)
+            throw gl.getProgramInfoLog(handle);
+
+        function makeUniformSetter(type, location){
+            switch(type){
+                case gl.BOOL:
+                case gl.INT:
+                case gl.SAMPLER_2D:
+                case gl.SAMPLER_CUBE:
+                    return function(value){
+                        gl.uniform1i(location, value);
+                        return this;
+                    };
+                case gl.FLOAT:
+                    return function(value){
+                        gl.uniform1f(location, value);
+                        return this;
+                    };
+                case gl.FLOAT_VEC2:
+                    return function(v){
+                        gl.uniform2f(location, v.x, v.y);
+                    };
+                case gl.FLOAT_VEC3:
+                    return function(v){
+                        gl.uniform3f(location, v.x, v.y, v.z);
+                    };
+                case gl.FLOAT_VEC4:
+                    return function(v){
+                        gl.uniform4f(location, v.x, v.y, v.z, v.w);
+                    };
+                case gl.FLOAT_MAT4:
+                    return function(mat4){
+                        gl.uniformMatrix4fv(location, false, mat4.toFloat32Array());
+                    };
+            }
+            return function(){
+                throw "Unknown uniform type: " + type;
+            };
+        }
+
+        this.locations = {};
+
+        var nu = gl.getProgramParameter(handle, gl.ACTIVE_UNIFORMS);
+        for(var i = 0; i < nu; ++i){
+            var info     = gl.getActiveUniform(handle, i);
+            var location = gl.getUniformLocation(handle, info.name);
+            var setter_name = info.name.charAt(0).toUpperCase() + info.name.slice(1);
+            this["set" + setter_name] = makeUniformSetter(info.type, location);
+            this.locations[info.name] = location;
+        }
+
+        var na = gl.getProgramParameter(handle, gl.ACTIVE_ATTRIBUTES);
+        for(var i = 0; i < na; ++i){
+            var info     = gl.getActiveAttrib(handle, i);
+            var location = gl.getAttribLocation(handle, info.name);
+            this.locations[info.name] = location;
+        }
+    };
+
+    Program.prototype.use = function(){
+        this.gl.useProgram(this.handle);
+    };
+
+    Program.prototype.dispose = function(){
+        this.gl.deleteShader(this.shader_vert);
+        this.gl.deleteShader(this.shader_frag);
+        this.gl.deleteProgram(this.handle);
+    };
+
+
+    return Program;
+
+})();
+Embr.Material = (function(){
+
+    function Material(gl, src_vertex, src_fragment){
+        Embr.Program.call(this, gl, src_vertex, src_fragment);
+        this.link();
+    }
+
+    Material.prototype = Object.create(Embr.Program.prototype);
+
+    Material.prototype.assignLocations = function(vbo){
+        for(var attr in this.attribute_locations){
+            if(attr in vbo.attributes)
+                vbo.attributes[attr].location = this.attribute_locations[attr];
+        }
+    };
+
+
+    return Material;
+
+})();
+Embr.ColorMaterial = (function(){
+
+    var src_vertex = [
+        "uniform mat4 modelview, projection;",
+
+        "attribute vec3 a_position;",
+        "attribute vec4 a_color;",
+
+        "varying vec4 v_color;",
+
+        "void main(){",
+            "v_color = a_color;",
+            "gl_Position = projection * modelview * vec4(a_position, 1.0);",
+        "}"
+    ].join("\n");
+
+    var src_fragment = [
+        "uniform vec4 color;",
+
+        "varying vec4 v_color;",
+
+        "void main(){",
+            "gl_FragColor = v_color * color;",
+        "}"
+    ].join("\n");
+
+
+    function ColorMaterial(gl){
+        Embr.Material.call(this, gl, src_vertex, src_fragment);
+
+        this.attribute_locations = {
+            position: this.program.locations.a_position,
+            color:    this.program.locations.a_color
+        };
+    }
+
+    ColorMaterial.prototype = Object.create(Embr.Material);
+
+
+    return ColorMaterial;
+
+})();Embr.NormalMaterial = (function(){
+
+    var src_vertex = [
+        "uniform mat4 modelview, projection;",
+
+        "attribute vec3 a_position;",
+        "attribute vec3 a_normal;",
+
+        "varying vec4 v_color;",
+
+        "void main(){",
+            "vec4 normal = modelview * vec4(a_normal, 0.0);",
+            "v_color = vec4((normal.xyz + 1.0) * 0.5, 1.0);",
+            "gl_Position = projection * modelview * vec4(a_position, 1.0);",
+        "}"
+    ].join("\n");
+
+    var src_fragment = [
+        "varying vec4 v_color;",
+
+        "void main(){",
+            "gl_FragColor = v_color;",
+        "}"
+    ].join("\n");
+
+
+    function NormalMaterial(gl){
+        Embr.Material.call(this, gl, src_vertex, src_fragment);
+
+        this.attribute_locations = {
+            position: this.locations.a_position,
+            normal:   this.locations.a_normal
+        };
+    }
+
+    NormalMaterial.prototype = Object.create(Embr.Material.prototype);
+
+
+    return NormalMaterial;
 
 })();

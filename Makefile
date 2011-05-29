@@ -13,8 +13,11 @@ JS_FILES = \
 	src/core/Texture.js \
 	src/core/Fbo.js \
 	src/core/PingPong.js \
+	src/core/Vbo.js \
 	src/core/Program.js \
-	src/core/Vbo.js
+	src/mesh/Material.js \
+	src/mesh/ColorMaterial.js \
+	src/mesh/NormalMaterial.js
 
 JS_COMPILER = \
 	java -jar util/compiler-20110502/compiler.jar \
