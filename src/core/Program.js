@@ -1,19 +1,42 @@
 Embr.Program = (function(){
 
-    var kShaderPrefix = "#ifdef GL_ES\nprecision highp float;\n#endif\n";
+    var kShaderPrefix         = "#ifdef GL_ES\nprecision highp float;\n#endif\n"
+    ,   kVertexShaderPrefix   = kShaderPrefix + "#define EM_VERTEX\n"
+    ,   kFragmentShaderPrefix = kShaderPrefix + "#define EM_FRAGMENT\n"
+    ,   includes = {};
+
+    function processIncludes(src){
+        var match, re = /^ *#include +"([\w\-\.]+)"/gm;
+        while(match = re.exec(src)){
+            var fn = match[1];
+            if(fn in includes){
+                var incl_src = includes[fn];
+                src = src.replace(new RegExp(match[0]), incl_src);
+                re.lastIndex = match.index + incl_src.length;
+            }
+        }
+        return src;
+    }
+
+    function include(name, src){
+        includes[name] = src;
+    }
 
 
     function Program(gl, src_vertex, src_fragment){
         this.gl = gl;
 
+        src_vertex   = processIncludes(src_vertex);
+        src_fragment = src_fragment ? processIncludes(src_fragment) : src_vertex;
+
         var sv = this.shader_vert = gl.createShader(gl.VERTEX_SHADER);
-        gl.shaderSource(sv, kShaderPrefix + src_vertex);
+        gl.shaderSource(sv, kVertexShaderPrefix + src_vertex);
         gl.compileShader(sv);
         if(gl.getShaderParameter(sv, gl.COMPILE_STATUS) !== true)
             throw gl.getShaderInfoLog(sv);
 
         var sf = this.shader_frag = gl.createShader(gl.FRAGMENT_SHADER);
-        gl.shaderSource(sf, kShaderPrefix + src_fragment);
+        gl.shaderSource(sf, kFragmentShaderPrefix + src_fragment);
         gl.compileShader(sf);
         if(gl.getShaderParameter(sf, gl.COMPILE_STATUS) !== true)
             throw gl.getShaderInfoLog(sf);
@@ -103,6 +126,9 @@ Embr.Program = (function(){
         this.gl.deleteShader(this.shader_frag);
         this.gl.deleteProgram(this.handle);
     };
+
+
+    Program.include = include;
 
 
     return Program;
