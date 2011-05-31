@@ -58,9 +58,10 @@ function init(){
             gl.clearColor(0,0,0,1);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-            this.material_normal.use();
-            this.material_normal.uniforms.modelview(this.modelview);
-            this.material_normal.uniforms.projection(this.projection);
+            this.material_normal.useUniforms({
+                modelview:  this.modelview,
+                projection: this.projection
+            });
             this.material_normal.assignLocations(this.cube);
             this.cube.draw();
 
