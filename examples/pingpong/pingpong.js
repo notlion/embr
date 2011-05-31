@@ -17,7 +17,7 @@ plask.simpleWindow({
         this.framerate(60);
         var gl = this.gl;
 
-        this.projection = new plask.Mat4().ortho(-1, 1, -1, 1, -1, 1);
+        this.projection = new em.Mat4().ortho(-1, 1, -1, 1, -1, 1);
 
         // Make Shaders
         em.Program.include("noise3D.glsl", fs.readFileSync("noise3D.glsl", "utf8"));

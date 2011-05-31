@@ -7,7 +7,7 @@
 <style type="text/css">
 
 body {
-    background: #111;
+    background: #000;
     color: #fff;
     padding: 0;
     margin: 0;
@@ -39,11 +39,14 @@ function init(){
             var gl = this.gl;
             gl.enable(gl.DEPTH_TEST);
 
-            this.material = new em.NormalMaterial(gl);
+            this.material_normal = new em.NormalMaterial(gl);
+            this.material_color  = new em.ColorMaterial(gl);
+            this.material_color.useUniforms({
+                color: new em.Vec4(1,1,0,1)
+            });
 
             // Make Cube
             this.cube = em.Vbo.makeCube(gl, 1, 1, 1);
-            this.material.assignLocations(this.cube);
         },
         step: function(){
             this.modelview.rotate(Math.sin(this.frametime) * 0.03, 0, 1, 0);
@@ -55,11 +58,18 @@ function init(){
             gl.clearColor(0,0,0,1);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-            // var prog = this.prog;
-            this.material.use();
-            this.material.setModelview(this.modelview);
-            this.material.setProjection(this.projection);
+            this.material_normal.use();
+            this.material_normal.uniforms.modelview(this.modelview);
+            this.material_normal.uniforms.projection(this.projection);
+            this.material_normal.assignLocations(this.cube);
+            this.cube.draw();
 
+            gl.clear(gl.DEPTH_BUFFER_BIT);
+
+            this.material_color.use();
+            this.material_color.uniforms.modelview(this.modelview.dup().scale(0.5, 0.5, 0.5));
+            this.material_color.uniforms.projection(this.projection);
+            this.material_color.assignLocations(this.cube);
             this.cube.draw();
         }
     });

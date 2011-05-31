@@ -67,14 +67,14 @@ Embr.Program = (function(){
             };
         }
 
+        this.uniforms  = {};
         this.locations = {};
 
         var nu = gl.getProgramParameter(handle, gl.ACTIVE_UNIFORMS);
         for(var i = 0; i < nu; ++i){
             var info     = gl.getActiveUniform(handle, i);
             var location = gl.getUniformLocation(handle, info.name);
-            var setter_name = info.name.charAt(0).toUpperCase() + info.name.slice(1);
-            this["set" + setter_name] = makeUniformSetter(info.type, location);
+            this.uniforms[info.name] = makeUniformSetter(info.type, location);
             this.locations[info.name] = location;
         }
 
@@ -88,6 +88,14 @@ Embr.Program = (function(){
 
     Program.prototype.use = function(){
         this.gl.useProgram(this.handle);
+    };
+
+    Program.prototype.useUniforms = function(obj){
+        this.use();
+        var uniforms = this.uniforms;
+        for(var u in obj){
+            uniforms[u](obj[u]);
+        }
     };
 
     Program.prototype.dispose = function(){

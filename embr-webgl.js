@@ -755,11 +755,40 @@ Embr.Util = (function(){
         }
     }
 
-    return {
-        glCheckErr: glCheckErr
+
+    function cloneOptions(options){
+        var result = {};
+        for(var key in options){
+            if(options[key] instanceof Object)
+                result[key] = cloneOptions(options[key]);
+            else
+                result[key] = options[key];
+        }
+        return result;
     }
 
-})();// Math and Random Utilities
+    function mergeOptions(defaults, options){
+        if(options === undefined)
+            return cloneOptions(defaults);
+        var option, result = {};
+        for(var key in defaults){
+            option = (key in options) ? options[key] : defaults[key];
+            if(option instanceof Object)
+                result[key] = mergeOptions(defaults[key], options[key]);
+            else
+                result[key] = option;
+        }
+        return result;
+    }
+
+
+    return {
+        glCheckErr:   glCheckErr,
+        mergeOptions: mergeOptions
+    }
+
+})();
+// Math and Random Utilities
 
 Embr.rand = function(max){
     return Math.random() * max;
@@ -1317,7 +1346,7 @@ Embr.Vbo = (function(){
             ,   location = attr.location;
 
             if(attr.location === undefined && target === gl.ARRAY_BUFFER)
-                location = loc_i++;
+                location = -1;
 
             vbo.attributes[name] = { buffer:   buffer
                                    , target:   target
@@ -1327,11 +1356,10 @@ Embr.Vbo = (function(){
         }
 
         for(var name in attributes){
-            var attr = attributes[name];
             if(name === "index")
-                addAttr(name, gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(attr.data));
+                addAttr(name, gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(attributes[name].data));
             else
-                addAttr(name, gl.ARRAY_BUFFER, new Float32Array(attr.data));
+                addAttr(name, gl.ARRAY_BUFFER, new Float32Array(attributes[name].data));
         }
 
         // If no indices are given we fall back to glDrawArrays
@@ -1347,7 +1375,7 @@ Embr.Vbo = (function(){
 
         for(var name in this.attributes){
             var attr = this.attributes[name];
-            if(attr.target == gl.ARRAY_BUFFER){
+            if(attr.target == gl.ARRAY_BUFFER && attr.location >= 0){
                 gl.bindBuffer(attr.target, attr.buffer);
                 gl.vertexAttribPointer(attr.location, attr.size, gl.FLOAT, false, 0, 0);
                 gl.enableVertexAttribArray(attr.location);
@@ -1424,7 +1452,8 @@ Embr.Vbo = (function(){
 
     return Vbo;
 
-})();Embr.Program = (function(){
+})();
+Embr.Program = (function(){
 
     var kShaderPrefix = "#ifdef GL_ES\nprecision highp float;\n#endif\n";
 
@@ -1493,14 +1522,14 @@ Embr.Vbo = (function(){
             };
         }
 
+        this.uniforms  = {};
         this.locations = {};
 
         var nu = gl.getProgramParameter(handle, gl.ACTIVE_UNIFORMS);
         for(var i = 0; i < nu; ++i){
             var info     = gl.getActiveUniform(handle, i);
             var location = gl.getUniformLocation(handle, info.name);
-            var setter_name = info.name.charAt(0).toUpperCase() + info.name.slice(1);
-            this["set" + setter_name] = makeUniformSetter(info.type, location);
+            this.uniforms[info.name] = makeUniformSetter(info.type, location);
             this.locations[info.name] = location;
         }
 
@@ -1516,6 +1545,14 @@ Embr.Vbo = (function(){
         this.gl.useProgram(this.handle);
     };
 
+    Program.prototype.useUniforms = function(obj){
+        this.use();
+        var uniforms = this.uniforms;
+        for(var u in obj){
+            uniforms[u](obj[u]);
+        }
+    };
+
     Program.prototype.dispose = function(){
         this.gl.deleteShader(this.shader_vert);
         this.gl.deleteShader(this.shader_frag);
@@ -1528,17 +1565,39 @@ Embr.Vbo = (function(){
 })();
 Embr.Material = (function(){
 
-    function Material(gl, src_vertex, src_fragment){
+    function Material(gl, src_vertex, src_fragment, options){
+        if(options && options.flags){
+            var src_prefix = "";
+            for(var o in options.flags){
+                if(options.flags[o])
+                    src_prefix += "#define " + o + "\n";
+            }
+            src_vertex   = src_prefix + src_vertex;
+            src_fragment = src_prefix + src_fragment;
+        }
+
         Embr.Program.call(this, gl, src_vertex, src_fragment);
         this.link();
+
+        this.attribute_locations = {};
+        if(options && options.attributes){
+            var attr;
+            for(var a in options.attributes){
+                attr = options.attributes[a];
+                if(attr in this.locations)
+                    this.attribute_locations[a] = this.locations[attr];
+            }
+        }
     }
 
     Material.prototype = Object.create(Embr.Program.prototype);
 
     Material.prototype.assignLocations = function(vbo){
-        for(var attr in this.attribute_locations){
-            if(attr in vbo.attributes)
+        for(var attr in vbo.attributes){
+            if(attr in this.attribute_locations)
                 vbo.attributes[attr].location = this.attribute_locations[attr];
+            else
+                vbo.attributes[attr].location = -1;
         }
     };
 
@@ -1552,12 +1611,16 @@ Embr.ColorMaterial = (function(){
         "uniform mat4 modelview, projection;",
 
         "attribute vec3 a_position;",
-        "attribute vec4 a_color;",
 
-        "varying vec4 v_color;",
+        "#ifdef use_vertex_color",
+            "attribute vec4 a_color;",
+            "varying vec4 v_color;",
+        "#endif",
 
         "void main(){",
-            "v_color = a_color;",
+            "#ifdef use_vertex_color",
+                "v_color = a_color;",
+            "#endif",
             "gl_Position = projection * modelview * vec4(a_position, 1.0);",
         "}"
     ].join("\n");
@@ -1565,24 +1628,37 @@ Embr.ColorMaterial = (function(){
     var src_fragment = [
         "uniform vec4 color;",
 
+        "#ifdef use_vertex_color",
         "varying vec4 v_color;",
+        "#endif",
 
         "void main(){",
-            "gl_FragColor = v_color * color;",
+            "#ifdef use_vertex_color",
+                "gl_FragColor = v_color * color;",
+            "#else",
+                "gl_FragColor = color;",
+            "#endif",
         "}"
     ].join("\n");
 
 
-    function ColorMaterial(gl){
-        Embr.Material.call(this, gl, src_vertex, src_fragment);
+    var default_options = {
+        attributes: {
+            position: "a_position",
+            color:    "a_color"
+        },
+        flags: {
+            use_vertex_color: false
+        }
+    };
 
-        this.attribute_locations = {
-            position: this.program.locations.a_position,
-            color:    this.program.locations.a_color
-        };
+
+    function ColorMaterial(gl, options){
+        options = Embr.Util.mergeOptions(default_options, options);
+        Embr.Material.call(this, gl, src_vertex, src_fragment, options);
     }
 
-    ColorMaterial.prototype = Object.create(Embr.Material);
+    ColorMaterial.prototype = Object.create(Embr.Material.prototype);
 
 
     return ColorMaterial;
@@ -1613,13 +1689,17 @@ Embr.ColorMaterial = (function(){
     ].join("\n");
 
 
-    function NormalMaterial(gl){
-        Embr.Material.call(this, gl, src_vertex, src_fragment);
+    var default_options = {
+        attributes: {
+            position: "a_position",
+            normal:   "a_normal"
+        }
+    };
 
-        this.attribute_locations = {
-            position: this.locations.a_position,
-            normal:   this.locations.a_normal
-        };
+
+    function NormalMaterial(gl, options){
+        options = Embr.Util.mergeOptions(default_options, options);
+        Embr.Material.call(this, gl, src_vertex, src_fragment, options);
     }
 
     NormalMaterial.prototype = Object.create(Embr.Material.prototype);

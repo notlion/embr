@@ -27,7 +27,7 @@ Embr.Vbo = (function(){
             ,   location = attr.location;
 
             if(attr.location === undefined && target === gl.ARRAY_BUFFER)
-                location = loc_i++;
+                location = -1;
 
             vbo.attributes[name] = { buffer:   buffer
                                    , target:   target
@@ -37,11 +37,10 @@ Embr.Vbo = (function(){
         }
 
         for(var name in attributes){
-            var attr = attributes[name];
             if(name === "index")
-                addAttr(name, gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(attr.data));
+                addAttr(name, gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(attributes[name].data));
             else
-                addAttr(name, gl.ARRAY_BUFFER, new Float32Array(attr.data));
+                addAttr(name, gl.ARRAY_BUFFER, new Float32Array(attributes[name].data));
         }
 
         // If no indices are given we fall back to glDrawArrays
@@ -57,7 +56,7 @@ Embr.Vbo = (function(){
 
         for(var name in this.attributes){
             var attr = this.attributes[name];
-            if(attr.target == gl.ARRAY_BUFFER){
+            if(attr.target == gl.ARRAY_BUFFER && attr.location >= 0){
                 gl.bindBuffer(attr.target, attr.buffer);
                 gl.vertexAttribPointer(attr.location, attr.size, gl.FLOAT, false, 0, 0);
                 gl.enableVertexAttribArray(attr.location);
