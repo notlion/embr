@@ -1,5 +1,7 @@
-Embr borrows ideas and code from
+#### Embr borrows ideas from the following ####
 
-[Cinder](http://github.com/cinder/Cinder)
-[Plask](http://github.com/deanm/plask)
+<p>
+[Cinder](http://github.com/cinder/Cinder)<br/>
+[Plask](http://github.com/deanm/plask)<br/>
 [PreGL](http://github.com/deanm/pregl)
+</p>
