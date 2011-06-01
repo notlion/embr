@@ -1,4 +1,4 @@
-#ifdef VERTEX
+#ifdef EM_VERTEX
 
 uniform mat4 u_mvp_matrix;
 
@@ -16,7 +16,7 @@ void main()
 #endif
 
 
-#ifdef FRAGMENT
+#ifdef EM_FRAGMENT
 #include "noise3D.glsl"
 
 uniform float u_time;

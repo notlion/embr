@@ -22,33 +22,44 @@ plask.simpleWindow({
                                                 0, 1, 0); // Up Vector
 
         var gl = this.gl;
-        gl.enable(gl.DEPTH_TEST)
+        gl.enable(gl.DEPTH_TEST);
 
-        // Make Shader
-        this.prog = new em.Program(gl, fs.readFileSync("cube.glsl", "utf8"));
+        // Make Materials
+        this.material_normal = new em.NormalMaterial(gl);
+        this.material_color  = new em.ColorMaterial(gl);
+        this.material_color.useUniforms({
+            color: new em.Vec4(1,1,0,1)
+        });
 
         // Make Cube
         this.cube = em.Vbo.makeCube(gl, 1, 1, 1);
-        this.cube.attributes.position.location = this.prog.loc_a_position;
-        this.cube.attributes.normal.location   = this.prog.loc_a_normal;
-        this.cube.attributes.texcoord.location = this.prog.loc_a_texcoord;
     },
 
     draw: function()
     {
-        var gl = this.gl
-
-        gl.clearColor(0,0,0,1);
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
         this.modelview.rotate(Math.sin(this.frametime) * 0.03, 0, 1, 0);
         this.modelview.rotate(Math.cos(this.frametime) * 0.07, 1, 0, 0);
 
-        var prog = this.prog;
-        prog.use();
-        prog.set_u_modelview(this.modelview);
-        prog.set_u_projection(this.projection);
+        var gl = this.gl;
 
+        // Clear Buffer
+        gl.clearColor(0,0,0,1);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        this.material_normal.useUniforms({
+            modelview:  this.modelview,
+            projection: this.projection
+        });
+        this.material_normal.assignLocations(this.cube);
+        this.cube.draw();
+
+        // Clear Depth Buffer only
+        gl.clear(gl.DEPTH_BUFFER_BIT);
+
+        this.material_color.use();
+        this.material_color.uniforms.modelview(this.modelview.dup().scale(0.5, 0.5, 0.5));
+        this.material_color.uniforms.projection(this.projection);
+        this.material_color.assignLocations(this.cube);
         this.cube.draw();
     }
 });

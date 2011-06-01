@@ -755,13 +755,46 @@ Embr.Util = (function(){
         }
     }
 
-    return {
-        glCheckErr: glCheckErr
+
+    function cloneOptions(options){
+        var result = {};
+        for(var key in options){
+            if(options[key] instanceof Object)
+                result[key] = cloneOptions(options[key]);
+            else
+                result[key] = options[key];
+        }
+        return result;
     }
 
-})();// Math and Random Utilities
+    function mergeOptions(defaults, options){
+        if(options === undefined)
+            return cloneOptions(defaults);
+        var option, result = {};
+        for(var key in defaults){
+            option = (key in options) ? options[key] : defaults[key];
+            if(option instanceof Object)
+                result[key] = mergeOptions(defaults[key], options[key]);
+            else
+                result[key] = option;
+        }
+        return result;
+    }
 
-Embr.rand = function(min, max){
+
+    return {
+        glCheckErr:   glCheckErr,
+        mergeOptions: mergeOptions
+    }
+
+})();
+// Math and Random Utilities
+
+Embr.rand = function(max){
+    return Math.random() * max;
+};
+
+Embr.rand2 = function(min, max){
     return min + Math.random() * (max - min);
 };
 
@@ -1284,122 +1317,7 @@ Embr.PingPong = (function(){
     return PingPong;
 
 })();
-// GLSL Shader Loader
-// Parses #include "source.glsl" where source.glsl is a filename previously loaded via loadProgram() or makeProgram().
-// Allows vertex and fragment code to be in the same file if surrounded by #ifdef VERTEX or FRAGMENT.
-
-Embr.Program = (function(){
-
-    var kShaderPrefix         = "#ifdef GL_ES\nprecision highp float;\n#endif\n"
-    ,   kVertexShaderPrefix   = kShaderPrefix + "#define VERTEX\n"
-    ,   kFragmentShaderPrefix = kShaderPrefix + "#define FRAGMENT\n"
-    ,   program_cache = {};
-
-    function processIncludes(src){
-        var match, re = /^ *#include +"([\w\-\.]+)"/gm;
-        while(match = re.exec(src)){
-            var fn = match[1];
-            if(fn in program_cache){
-                var incl_src = program_cache[fn];
-                src = src.replace(new RegExp(match[0]), incl_src);
-                re.lastIndex = match.index + incl_src.length;
-            }
-        }
-        return src;
-    }
-
-    function include(name, src){
-        program_cache[name] = src;
-    }
-
-    function Program(gl, src){
-        this.gl = gl;
-
-        src = processIncludes(src);
-
-        var vshader = this.vshader = gl.createShader(gl.VERTEX_SHADER);
-        gl.shaderSource(vshader, kVertexShaderPrefix + src);
-        gl.compileShader(vshader);
-        if(gl.getShaderParameter(vshader, gl.COMPILE_STATUS) !== true)
-            throw gl.getShaderInfoLog(vshader);
-
-        var fshader = this.fshader = gl.createShader(gl.FRAGMENT_SHADER);
-        gl.shaderSource(fshader, kFragmentShaderPrefix + src);
-        gl.compileShader(fshader);
-        if(gl.getShaderParameter(fshader, gl.COMPILE_STATUS) !== true)
-            throw gl.getShaderInfoLog(fshader);
-
-        var handle = this.handle = gl.createProgram();
-        gl.attachShader(handle, vshader);
-        gl.attachShader(handle, fshader);
-        gl.linkProgram(handle);
-        if(gl.getProgramParameter(handle, gl.LINK_STATUS) !== true)
-            throw gl.getProgramInfoLog(handle);
-
-        function makeSetter(type, loc){
-            switch(type){
-                case gl.BOOL:
-                case gl.INT:
-                case gl.SAMPLER_2D:
-                case gl.SAMPLER_CUBE:
-                    return function(value){
-                        gl.uniform1i(loc, value);
-                        return this;
-                    };
-                case gl.FLOAT:
-                    return function(value){
-                        gl.uniform1f(loc, value);
-                        return this;
-                    };
-                case gl.FLOAT_VEC2:
-                    return function(v){
-                        gl.uniform2f(loc, v.x, v.y);
-                    };
-                case gl.FLOAT_VEC3:
-                    return function(v){
-                        gl.uniform3f(loc, v.x, v.y, v.z);
-                    };
-                case gl.FLOAT_VEC4:
-                    return function(v){
-                        gl.uniform4f(loc, v.x, v.y, v.z, v.w);
-                    };
-                case gl.FLOAT_MAT4:
-                    return function(mat4){
-                        gl.uniformMatrix4fv(loc, false, mat4.toFloat32Array());
-                    };
-            }
-            return function(){
-                throw "Unknown uniform type: " + type;
-            };
-        }
-
-        // Create Uniform Setters / Getters
-        var nu = gl.getProgramParameter(handle, gl.ACTIVE_UNIFORMS);
-        for(var i = 0; i < nu; i++){
-            var info = gl.getActiveUniform(handle, i);
-            var loc  = gl.getUniformLocation(handle, info.name);
-            this['set_' + info.name] = makeSetter(info.type, loc);
-            this['loc_' + info.name] = loc;
-        }
-
-        // Create Attribute Setters / Getters
-        var na = gl.getProgramParameter(handle, gl.ACTIVE_ATTRIBUTES);
-        for(var i = 0; i < na; i++){
-            var info = gl.getActiveAttrib(handle, i);
-            var loc  = gl.getAttribLocation(handle, info.name);
-            this['loc_' + info.name] = loc;
-        }
-    }
-
-    Program.prototype.use = function(){
-        this.gl.useProgram(this.handle);
-    };
-
-    Program.include = include;
-
-    return Program;
-
-})();// Vertex Buffer Object
+// Vertex Buffer Object
 
 Embr.Vbo = (function(){
 
@@ -1428,7 +1346,7 @@ Embr.Vbo = (function(){
             ,   location = attr.location;
 
             if(attr.location === undefined && target === gl.ARRAY_BUFFER)
-                location = loc_i++;
+                location = -1;
 
             vbo.attributes[name] = { buffer:   buffer
                                    , target:   target
@@ -1438,11 +1356,10 @@ Embr.Vbo = (function(){
         }
 
         for(var name in attributes){
-            var attr = attributes[name];
             if(name === "index")
-                addAttr(name, gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(attr.data));
+                addAttr(name, gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(attributes[name].data));
             else
-                addAttr(name, gl.ARRAY_BUFFER, new Float32Array(attr.data));
+                addAttr(name, gl.ARRAY_BUFFER, new Float32Array(attributes[name].data));
         }
 
         // If no indices are given we fall back to glDrawArrays
@@ -1458,7 +1375,7 @@ Embr.Vbo = (function(){
 
         for(var name in this.attributes){
             var attr = this.attributes[name];
-            if(attr.target == gl.ARRAY_BUFFER){
+            if(attr.target == gl.ARRAY_BUFFER && attr.location >= 0){
                 gl.bindBuffer(attr.target, attr.buffer);
                 gl.vertexAttribPointer(attr.location, attr.size, gl.FLOAT, false, 0, 0);
                 gl.enableVertexAttribArray(attr.location);
@@ -1534,5 +1451,308 @@ Embr.Vbo = (function(){
     }
 
     return Vbo;
+
+})();
+Embr.Program = (function(){
+
+    var kShaderPrefix         = "#ifdef GL_ES\nprecision highp float;\n#endif\n"
+    ,   kVertexShaderPrefix   = kShaderPrefix + "#define EM_VERTEX\n"
+    ,   kFragmentShaderPrefix = kShaderPrefix + "#define EM_FRAGMENT\n"
+    ,   includes = {};
+
+    function processIncludes(src){
+        var match, re = /^ *#include +"([\w\-\.]+)"/gm;
+        while(match = re.exec(src)){
+            var fn = match[1];
+            if(fn in includes){
+                var incl_src = includes[fn];
+                src = src.replace(new RegExp(match[0]), incl_src);
+                re.lastIndex = match.index + incl_src.length;
+            }
+        }
+        return src;
+    }
+
+    function include(name, src){
+        includes[name] = src;
+    }
+
+
+    function Program(gl, src_vertex, src_fragment){
+        this.gl = gl;
+
+        src_vertex   = processIncludes(src_vertex);
+        src_fragment = src_fragment ? processIncludes(src_fragment) : src_vertex;
+
+        var sv = this.shader_vert = gl.createShader(gl.VERTEX_SHADER);
+        gl.shaderSource(sv, kVertexShaderPrefix + src_vertex);
+        gl.compileShader(sv);
+        if(gl.getShaderParameter(sv, gl.COMPILE_STATUS) !== true)
+            throw gl.getShaderInfoLog(sv);
+
+        var sf = this.shader_frag = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(sf, kFragmentShaderPrefix + src_fragment);
+        gl.compileShader(sf);
+        if(gl.getShaderParameter(sf, gl.COMPILE_STATUS) !== true)
+            throw gl.getShaderInfoLog(sf);
+
+        this.handle = gl.createProgram();
+    }
+
+    Program.prototype.link = function(){
+        var gl     = this.gl
+        ,   handle = this.handle;
+        gl.attachShader(handle, this.shader_vert);
+        gl.attachShader(handle, this.shader_frag);
+        gl.linkProgram(handle);
+        if(gl.getProgramParameter(handle, gl.LINK_STATUS) !== true)
+            throw gl.getProgramInfoLog(handle);
+
+        function makeUniformSetter(type, location){
+            switch(type){
+                case gl.BOOL:
+                case gl.INT:
+                case gl.SAMPLER_2D:
+                case gl.SAMPLER_CUBE:
+                    return function(value){
+                        gl.uniform1i(location, value);
+                        return this;
+                    };
+                case gl.FLOAT:
+                    return function(value){
+                        gl.uniform1f(location, value);
+                        return this;
+                    };
+                case gl.FLOAT_VEC2:
+                    return function(v){
+                        gl.uniform2f(location, v.x, v.y);
+                    };
+                case gl.FLOAT_VEC3:
+                    return function(v){
+                        gl.uniform3f(location, v.x, v.y, v.z);
+                    };
+                case gl.FLOAT_VEC4:
+                    return function(v){
+                        gl.uniform4f(location, v.x, v.y, v.z, v.w);
+                    };
+                case gl.FLOAT_MAT4:
+                    return function(mat4){
+                        gl.uniformMatrix4fv(location, false, mat4.toFloat32Array());
+                    };
+            }
+            return function(){
+                throw "Unknown uniform type: " + type;
+            };
+        }
+
+        this.uniforms  = {};
+        this.locations = {};
+
+        var nu = gl.getProgramParameter(handle, gl.ACTIVE_UNIFORMS);
+        for(var i = 0; i < nu; ++i){
+            var info     = gl.getActiveUniform(handle, i);
+            var location = gl.getUniformLocation(handle, info.name);
+            this.uniforms[info.name] = makeUniformSetter(info.type, location);
+            this.locations[info.name] = location;
+        }
+
+        var na = gl.getProgramParameter(handle, gl.ACTIVE_ATTRIBUTES);
+        for(var i = 0; i < na; ++i){
+            var info     = gl.getActiveAttrib(handle, i);
+            var location = gl.getAttribLocation(handle, info.name);
+            this.locations[info.name] = location;
+        }
+    };
+
+    Program.prototype.use = function(){
+        this.gl.useProgram(this.handle);
+    };
+
+    Program.prototype.useUniforms = function(obj){
+        this.use();
+        var uniforms = this.uniforms;
+        for(var u in obj){
+            uniforms[u](obj[u]);
+        }
+    };
+
+    Program.prototype.dispose = function(){
+        this.gl.deleteShader(this.shader_vert);
+        this.gl.deleteShader(this.shader_frag);
+        this.gl.deleteProgram(this.handle);
+    };
+
+
+    Program.include = include;
+
+
+    return Program;
+
+})();
+Embr.Material = (function(){
+
+    function Material(gl, src_vertex, src_fragment, options){
+        if(!src_fragment)
+            src_fragment = src_vertex;
+
+        if(options && options.flags){
+            var src_prefix = "";
+            for(var o in options.flags){
+                if(options.flags[o])
+                    src_prefix += "#define " + o + "\n";
+            }
+            src_vertex   = src_prefix + src_vertex;
+            src_fragment = src_prefix + src_fragment;
+        }
+
+        Embr.Program.call(this, gl, src_vertex, src_fragment);
+        this.link();
+
+        this.attribute_locations = {};
+        if(options && options.attributes){
+            var attr;
+            for(var a in options.attributes){
+                attr = options.attributes[a];
+                if(attr in this.locations)
+                    this.attribute_locations[a] = this.locations[attr];
+            }
+        }
+    }
+
+    Material.prototype = Object.create(Embr.Program.prototype);
+
+    Material.prototype.assignLocations = function(vbo){
+        for(var attr in vbo.attributes){
+            if(attr in this.attribute_locations)
+                vbo.attributes[attr].location = this.attribute_locations[attr];
+            else
+                vbo.attributes[attr].location = -1;
+        }
+    };
+
+
+    return Material;
+
+})();
+Embr.ColorMaterial = (function(){
+
+    var src_vertex = [
+        "uniform mat4 modelview, projection;",
+
+        "attribute vec3 a_position;",
+
+        "#ifdef use_vertex_color",
+            "attribute vec4 a_color;",
+            "varying vec4 v_color;",
+        "#endif",
+
+        "#ifdef use_texture",
+            "attribute vec2 a_texcoord;",
+            "varying vec2 v_texcoord;",
+        "#endif",
+
+        "void main(){",
+            "#ifdef use_vertex_color",
+                "v_color = a_color;",
+            "#endif",
+            "#ifdef use_texture",
+                "v_texcoord = a_texcoord;",
+            "#endif",
+            "gl_Position = projection * modelview * vec4(a_position, 1.0);",
+        "}"
+    ].join("\n");
+
+    var src_fragment = [
+        "uniform vec4 color;",
+
+        "#ifdef use_vertex_color",
+            "varying vec4 v_color;",
+        "#endif",
+
+        "#ifdef use_texture",
+            "uniform sampler2D texture;",
+            "varying vec2 v_texcoord;",
+        "#endif",
+
+        "void main(){",
+            "vec4 c = color;",
+            "#ifdef use_vertex_color",
+                "c *= v_color;",
+            "#endif",
+            "#ifdef use_texture",
+                "c *= texture2D(texture, v_texcoord);",
+            "#endif",
+            "gl_FragColor = c;",
+        "}"
+    ].join("\n");
+
+
+    var default_options = {
+        attributes: {
+            position: "a_position",
+            texcoord: "a_texcoord",
+            color:    "a_color"
+        },
+        flags: {
+            use_vertex_color: false,
+            use_texture:      false
+        }
+    };
+
+
+    function ColorMaterial(gl, options){
+        options = Embr.Util.mergeOptions(default_options, options);
+        Embr.Material.call(this, gl, src_vertex, src_fragment, options);
+    }
+
+    ColorMaterial.prototype = Object.create(Embr.Material.prototype);
+
+
+    return ColorMaterial;
+
+})();
+Embr.NormalMaterial = (function(){
+
+    var src_vertex = [
+        "uniform mat4 modelview, projection;",
+
+        "attribute vec3 a_position;",
+        "attribute vec3 a_normal;",
+
+        "varying vec4 v_color;",
+
+        "void main(){",
+            "vec4 normal = modelview * vec4(a_normal, 0.0);",
+            "v_color = vec4((normal.xyz + 1.0) * 0.5, 1.0);",
+            "gl_Position = projection * modelview * vec4(a_position, 1.0);",
+        "}"
+    ].join("\n");
+
+    var src_fragment = [
+        "varying vec4 v_color;",
+
+        "void main(){",
+            "gl_FragColor = v_color;",
+        "}"
+    ].join("\n");
+
+
+    var default_options = {
+        attributes: {
+            position: "a_position",
+            normal:   "a_normal"
+        }
+    };
+
+
+    function NormalMaterial(gl, options){
+        options = Embr.Util.mergeOptions(default_options, options);
+        Embr.Material.call(this, gl, src_vertex, src_fragment, options);
+    }
+
+    NormalMaterial.prototype = Object.create(Embr.Material.prototype);
+
+
+    return NormalMaterial;
 
 })();

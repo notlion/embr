@@ -1,2 +1,6 @@
 .DS_Store
 *.sublime-project
+
+embr-plask.js
+embr-webgl.js
+embr-webgl.min.js
