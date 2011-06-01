@@ -1,7 +1,7 @@
 varying vec2 v_texcoord;
 
 
-#ifdef VERTEX
+#ifdef EM_VERTEX
 
     uniform mat4 u_mvp_matrix;
 
@@ -17,7 +17,7 @@ varying vec2 v_texcoord;
 #endif
 
 
-#ifdef FRAGMENT
+#ifdef EM_FRAGMENT
 
 #include "noise3D.glsl"
 

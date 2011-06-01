@@ -1,6 +1,9 @@
 Embr.Material = (function(){
 
     function Material(gl, src_vertex, src_fragment, options){
+        if(!src_fragment)
+            src_fragment = src_vertex;
+
         if(options && options.flags){
             var src_prefix = "";
             for(var o in options.flags){

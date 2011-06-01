@@ -1,4 +1,4 @@
- var fs = require('fs')
+var fs = require('fs')
 ,   plask = require('plask')
 ,   em = require('../../embr-plask');
 
@@ -22,8 +22,23 @@ plask.simpleWindow({
         // Make Shaders
         em.Program.include("noise3D.glsl", fs.readFileSync("noise3D.glsl", "utf8"));
         this.smear_prog = new em.Program(gl, fs.readFileSync("smear.glsl", "utf8"));
-        this.tex_prog   = new em.Program(gl, fs.readFileSync("texture.glsl", "utf8"));
-        this.color_prog = new em.Program(gl, fs.readFileSync("color.glsl", "utf8"));
+        this.smear_prog.link();
+
+        this.color_mater = new em.ColorMaterial(gl);
+        this.color_mater.useUniforms({
+            projection: this.projection,
+            modelview:  new em.Mat4()
+        });
+
+        this.tex_mater = new em.ColorMaterial(gl, {
+            flags: { use_texture: true }
+        });
+        this.tex_mater.useUniforms({
+            projection: this.projection,
+            modelview:  new em.Mat4(),
+            texture:    0,
+            color:      new em.Vec4(1,1,1,1)
+        });
 
         // Make PingPong Framebuffers
         this.pp = new em.PingPong(gl, 512, 512, [
@@ -33,44 +48,38 @@ plask.simpleWindow({
 
         // Make Plane
         this.plane = em.Vbo.makePlane(gl, -1, -1, 1, 1);
-        this.plane.attributes.position.location = this.smear_prog.loc_a_position;
-        this.plane.attributes.texcoord.location = this.smear_prog.loc_a_texcoord;
+        this.plane.attributes.position.location = this.smear_prog.locations.a_position;
+        this.plane.attributes.texcoord.location = this.smear_prog.locations.a_texcoord;
 
-        // Make Brush (todo: somehow this is broken)
         this.cube = em.Vbo.makeCube(gl, 0.1, 0.1, 0.1);
-        this.cube.attributes.position.location = this.color_prog.loc_a_position;
-
-        // gl.enable(gl.BLEND);
-        // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        this.color_mater.assignLocations(this.cube);
     },
 
     draw: function()
     {
         var gl = this.gl;
-        var prog;
-
         var time = this.frametime;
 
         // First Pass: Render to FBO
 
         this.pp.bind();
 
-        prog = this.smear_prog;
-        prog.use();
         var r = em.Noise.sn2(0, time / 10) * 0.1;
-        prog.set_u_mvp_matrix(this.projection.dup().rotate(r, 0,0,1).scale(1.04, 1.04, 1.04));
-        prog.set_u_time(this.frametime / 4);
-        prog.set_u_scale(0.01);
-        prog.set_u_tex(0);
+        this.smear_prog.useUniforms({
+            u_mvp_matrix: this.projection.dup().rotate(r, 0,0,1).scale(1.04, 1.04, 1.04),
+            u_time:       this.frametime / 4,
+            u_scale:      0.01,
+            u_tex:        0
+        });
 
         this.pp.bindTexture(0);
         this.plane.draw();
         this.pp.unbindTexture(0);
 
-        prog = this.color_prog;
-        prog.use();
-        prog.set_u_mvp_matrix(this.projection);
-        prog.set_u_color(new em.Vec4(Math.sin(time * 2), Math.sin(time * 3), Math.cos(time * 4), 0.25));
+        this.color_mater.use();
+        this.color_mater.uniforms.color(
+            new em.Vec4(Math.sin(time * 2), Math.sin(time * 3), Math.cos(time * 4), 0.25)
+        );
         this.cube.draw();
 
         this.pp.unbind();
@@ -78,10 +87,7 @@ plask.simpleWindow({
 
         // Second Pass: Render to Screen
 
-        prog = this.tex_prog;
-        prog.use();
-        prog.set_u_mvp_matrix(this.projection);
-        prog.set_u_tex(0);
+        this.tex_mater.use();
 
         this.pp.bindTexture(0);
         this.plane.draw();

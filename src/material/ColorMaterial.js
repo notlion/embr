@@ -10,9 +10,17 @@ Embr.ColorMaterial = (function(){
             "varying vec4 v_color;",
         "#endif",
 
+        "#ifdef use_texture",
+            "attribute vec2 a_texcoord;",
+            "varying vec2 v_texcoord;",
+        "#endif",
+
         "void main(){",
             "#ifdef use_vertex_color",
                 "v_color = a_color;",
+            "#endif",
+            "#ifdef use_texture",
+                "v_texcoord = a_texcoord;",
             "#endif",
             "gl_Position = projection * modelview * vec4(a_position, 1.0);",
         "}"
@@ -22,15 +30,23 @@ Embr.ColorMaterial = (function(){
         "uniform vec4 color;",
 
         "#ifdef use_vertex_color",
-        "varying vec4 v_color;",
+            "varying vec4 v_color;",
+        "#endif",
+
+        "#ifdef use_texture",
+            "uniform sampler2D texture;",
+            "varying vec2 v_texcoord;",
         "#endif",
 
         "void main(){",
+            "vec4 c = color;",
             "#ifdef use_vertex_color",
-                "gl_FragColor = v_color * color;",
-            "#else",
-                "gl_FragColor = color;",
+                "c *= v_color;",
             "#endif",
+            "#ifdef use_texture",
+                "c *= texture2D(texture, v_texcoord);",
+            "#endif",
+            "gl_FragColor = c;",
         "}"
     ].join("\n");
 
@@ -38,10 +54,12 @@ Embr.ColorMaterial = (function(){
     var default_options = {
         attributes: {
             position: "a_position",
+            texcoord: "a_texcoord",
             color:    "a_color"
         },
         flags: {
-            use_vertex_color: false
+            use_vertex_color: false,
+            use_texture:      false
         }
     };
 
