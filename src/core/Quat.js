@@ -29,7 +29,7 @@ Embr.Quat = (function(){
     };
 
 
-    Quat.prototype.mult2 = function(a, b){
+    Quat.prototype.mul2 = function(a, b){
         var ax = a.x, ay = a.y, az = a.z, aw = a.w
         ,   bx = b.x, by = b.y, bz = b.z, bw = b.w;
 
@@ -41,11 +41,11 @@ Embr.Quat = (function(){
         return this;
     };
 
-    Quat.prototype.mult = function(b){
-        return this.mult2(this, b);
+    Quat.prototype.mul = function(b){
+        return this.mul2(this, b);
     };
 
-    Quat.prototype.mult4 = function(x, y, z, w){
+    Quat.prototype.mul4 = function(x, y, z, w){
         var ax = this.x, ay = this.y, az = this.z, aw = this.w;
 
         this.x = w*ax + x*aw + y*az - z*ay;
@@ -76,10 +76,10 @@ Embr.Quat = (function(){
         if(len > kEpsilon){
             var t2  = theta / 2
             ,   st2 = Math.sin(t2);
-            this.mult4((x / len) * st2,
-                       (y / len) * st2,
-                       (z / len) * st2,
-                       Math.cos(t2));
+            this.mul4((x / len) * st2,
+                      (y / len) * st2,
+                      (z / len) * st2,
+                      Math.cos(t2));
         }
 
         return this;

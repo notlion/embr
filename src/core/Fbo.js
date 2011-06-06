@@ -57,30 +57,29 @@ Embr.Fbo = (function(){
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }
 
-    Fbo.prototype.bind = function(){
-        var gl = this.gl;
-        gl.bindFramebuffer(gl.FRAMEBUFFER, this.handle);
-    };
-
-    Fbo.prototype.unbind = function(){
-        var gl = this.gl;
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    };
-
-    Fbo.prototype.bindTexture = function(i, unit){
-        var gl  = this.gl
-        ,   att = this.tex_attachments[i];
-        if(unit !== undefined)
-            att.unit = gl.TEXTURE0 + unit;
-        gl.activeTexture(att.unit);
-        gl.bindTexture(att.target, att.handle);
-    };
-
-    Fbo.prototype.unbindTexture = function(i){
-        var gl  = this.gl
-        ,   att = this.tex_attachments[i];
-        gl.activeTexture(att.unit);
-        gl.bindTexture(att.target, null);
+    Fbo.prototype = {
+        bind: function(){
+            var gl = this.gl;
+            gl.bindFramebuffer(gl.FRAMEBUFFER, this.handle);
+        },
+        unbind: function(){
+            var gl = this.gl;
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        },
+        bindTexture: function(i, unit){
+            var gl  = this.gl
+            ,   att = this.tex_attachments[i];
+            if(unit !== undefined)
+                att.unit = gl.TEXTURE0 + unit;
+            gl.activeTexture(att.unit);
+            gl.bindTexture(att.target, att.handle);
+        },
+        unbindTexture: function(i){
+            var gl  = this.gl;
+            var att = this.tex_attachments[i];
+            gl.activeTexture(att.unit);
+            gl.bindTexture(att.target, null);
+        }
     };
 
     return Fbo;

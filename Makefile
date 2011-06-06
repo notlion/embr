@@ -1,5 +1,6 @@
 JS_FILES_PLASK = \
-	src/main-plask.js
+	src/main-plask.js \
+	src/core/TextureSkCanvas.js
 
 JS_FILES_WEBGL = \
 	src/main-webgl.js \

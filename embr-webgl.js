@@ -853,7 +853,7 @@ Embr.Quat = (function(){
     };
 
 
-    Quat.prototype.mult2 = function(a, b){
+    Quat.prototype.mul2 = function(a, b){
         var ax = a.x, ay = a.y, az = a.z, aw = a.w
         ,   bx = b.x, by = b.y, bz = b.z, bw = b.w;
 
@@ -865,11 +865,11 @@ Embr.Quat = (function(){
         return this;
     };
 
-    Quat.prototype.mult = function(b){
-        return this.mult2(this, b);
+    Quat.prototype.mul = function(b){
+        return this.mul2(this, b);
     };
 
-    Quat.prototype.mult4 = function(x, y, z, w){
+    Quat.prototype.mul4 = function(x, y, z, w){
         var ax = this.x, ay = this.y, az = this.z, aw = this.w;
 
         this.x = w*ax + x*aw + y*az - z*ay;
@@ -900,10 +900,10 @@ Embr.Quat = (function(){
         if(len > kEpsilon){
             var t2  = theta / 2
             ,   st2 = Math.sin(t2);
-            this.mult4((x / len) * st2,
-                       (y / len) * st2,
-                       (z / len) * st2,
-                       Math.cos(t2));
+            this.mul4((x / len) * st2,
+                      (y / len) * st2,
+                      (z / len) * st2,
+                      Math.cos(t2));
         }
 
         return this;
@@ -1143,13 +1143,13 @@ Embr.Noise = (function(){
 
 })();
 // Texture
-// |data| typed array (Uint32Array, Float32Array)
 
 Embr.Texture = (function(){
 
     function Texture(gl, width, height, data, fmt){
+        this.gl     = gl;
         this.width  = width;
-        this.height = heigth;
+        this.height = height;
 
         if(fmt === undefined) fmt = {};
 
@@ -1162,35 +1162,36 @@ Embr.Texture = (function(){
         this.format  = fmt.format  !== undefined ? fmt.format  : gl.RGBA;
         this.formati = fmt.formati !== undefined ? fmt.formati : gl.RGBA;
         this.type    = fmt.type    !== undefined ? fmt.type    : gl.UNSIGNED_BYTE;
+        this.unit    = fmt.unit    !== undefined ? fmt.unit    : gl.TEXTURE0;
 
         this.handle = gl.createTexture();
         gl.bindTexture(this.target, this.handle);
-        gl.texImage2D(target, 0, this.formati, width, height, 0, this.format, type, tex_data);
+        gl.texImage2D(this.target, 0, this.formati, width, height, 0, this.format, this.type, data);
         gl.texParameteri(this.target, gl.TEXTURE_MIN_FILTER, filter_min);
         gl.texParameteri(this.target, gl.TEXTURE_MAG_FILTER, filter_mag);
         gl.texParameteri(this.target, gl.TEXTURE_WRAP_S, wrap_s);
         gl.texParameteri(this.target, gl.TEXTURE_WRAP_T, wrap_t);
     }
 
-    Texture.prototype.bind = function(unit){
-        var gl = this.gl;
-        if(unit !== undefined)
-            gl.activeTexture(gl.TEXTURE0 + unit);
-        gl.bindTexture(this.target, obj);
-    }
-
-    Texture.prototype.unbind = function(unit){
-        var gl = this.gl;
-        if(unit !== undefined)
-            gl.activeTexture(gl.TEXTURE0 + unit);
-        gl.bindTexture(this.target, null);
-    }
-
-    Texture.prototype.update = function(data){
-        var gl = this.gl;
-        gl.bindTexture(this.target, this.handle);
-        gl.texSubImage2D(this.target, 0, 0, 0, this.width, this.height, this.format, this.type, data);
-    }
+    Texture.prototype = {
+        bind: function(unit){
+            var gl = this.gl;
+            if(unit !== undefined)
+                this.unit = gl.TEXTURE0 + unit;
+            gl.activeTexture(this.unit);
+            gl.bindTexture(this.target, this.handle);
+        },
+        unbind: function(){
+            var gl = this.gl;
+            gl.activeTexture(this.unit);
+            gl.bindTexture(this.target, null);
+        },
+        update: function(data){
+            var gl = this.gl;
+            gl.bindTexture(this.target, this.handle);
+            gl.texSubImage2D(this.target, 0, 0, 0, this.width, this.height, this.format, this.type, data);
+        }
+    };
 
     return Texture;
 
@@ -1274,8 +1275,8 @@ Embr.Fbo = (function(){
     };
 
     Fbo.prototype.unbindTexture = function(i){
-        var gl  = this.gl
-        ,   att = this.tex_attachments[i];
+        var gl  = this.gl;
+        var att = this.tex_attachments[i];
         gl.activeTexture(att.unit);
         gl.bindTexture(att.target, null);
     };
@@ -1562,6 +1563,8 @@ Embr.Program = (function(){
             var location = gl.getAttribLocation(handle, info.name);
             this.locations[info.name] = location;
         }
+
+        return this;
     };
 
     Program.prototype.use = function(){

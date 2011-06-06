@@ -107,6 +107,8 @@ Embr.Program = (function(){
             var location = gl.getAttribLocation(handle, info.name);
             this.locations[info.name] = location;
         }
+
+        return this;
     };
 
     Program.prototype.use = function(){

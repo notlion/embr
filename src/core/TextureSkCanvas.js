@@ -1,11 +1,9 @@
-// Texture
+Embr.TextureSkCanvas = (function(){
 
-Embr.Texture = (function(){
-
-    function Texture(gl, width, height, data, fmt){
+    function TextureSkCanvas(gl, canvas, fmt){
         this.gl     = gl;
-        this.width  = width;
-        this.height = height;
+        this.width  = canvas.width;
+        this.height = canvas.height;
 
         if(fmt === undefined) fmt = {};
 
@@ -14,22 +12,19 @@ Embr.Texture = (function(){
         ,   wrap_s     = fmt.wrap_s     !== undefined ? fmt.wrap_s     : gl.CLAMP_TO_EDGE
         ,   wrap_t     = fmt.wrap_t     !== undefined ? fmt.wrap_t     : gl.CLAMP_TO_EDGE;
 
-        this.target  = fmt.target  !== undefined ? fmt.target  : gl.TEXTURE_2D;
-        this.format  = fmt.format  !== undefined ? fmt.format  : gl.RGBA;
-        this.formati = fmt.formati !== undefined ? fmt.formati : gl.RGBA;
-        this.type    = fmt.type    !== undefined ? fmt.type    : gl.UNSIGNED_BYTE;
-        this.unit    = fmt.unit    !== undefined ? fmt.unit    : gl.TEXTURE0;
+        this.target = fmt.target !== undefined ? fmt.target : gl.TEXTURE_2D;
+        this.unit   = fmt.unit   !== undefined ? fmt.unit   : gl.TEXTURE0;
 
         this.handle = gl.createTexture();
         gl.bindTexture(this.target, this.handle);
-        gl.texImage2D(this.target, 0, this.formati, width, height, 0, this.format, this.type, data);
+        gl.texImage2DSkCanvas(this.target, 0, canvas);
         gl.texParameteri(this.target, gl.TEXTURE_MIN_FILTER, filter_min);
         gl.texParameteri(this.target, gl.TEXTURE_MAG_FILTER, filter_mag);
         gl.texParameteri(this.target, gl.TEXTURE_WRAP_S, wrap_s);
         gl.texParameteri(this.target, gl.TEXTURE_WRAP_T, wrap_t);
     }
 
-    Texture.prototype = {
+    TextureSkCanvas.prototype = {
         bind: function(unit){
             var gl = this.gl;
             if(unit !== undefined)
@@ -49,6 +44,6 @@ Embr.Texture = (function(){
         }
     };
 
-    return Texture;
+    return TextureSkCanvas;
 
 })();
