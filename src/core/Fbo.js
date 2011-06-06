@@ -19,7 +19,8 @@ Embr.Fbo = (function(){
             ,   formati = fmt.formati !== undefined ? fmt.formati : gl.RGBA
             ,   attach  = fmt.attach  !== undefined ? fmt.attach  : gl.COLOR_ATTACHMENT0 + cai++;
 
-            if(target == gl.RENDERBUFFER){ // Renderbuffer Attachment (Depth, etc)
+            // Renderbuffer Attachment (Depth, etc)
+            if(target == gl.RENDERBUFFER){
                 var rb_handle = gl.createRenderbuffer();
                 gl.bindRenderbuffer(gl.RENDERBUFFER, rb_handle);
                 gl.renderbufferStorage(target, formati, width, height);
@@ -27,7 +28,9 @@ Embr.Fbo = (function(){
 
                 this.render_attachments.push({ handle: rb_handle });
             }
-            else{ // Texture Attachment
+
+            // Texture Attachment
+            else{
                 var format     = fmt.format     !== undefined ? fmt.format     : gl.RGBA
                 ,   type       = fmt.type       !== undefined ? fmt.type       : gl.UNSIGNED_BYTE
                 ,   filter_min = fmt.filter_min !== undefined ? fmt.filter_min : gl.NEAREST
