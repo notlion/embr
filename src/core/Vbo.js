@@ -4,7 +4,7 @@ Embr.Vbo = (function(){
 
     // |type| gl.POINTS, gl.TRIANGLES etc..
     // |usage| gl.STATIC_DRAW, gl.STREAM_DRAW or gl.DYNAMIC_DRAW
-    // |attributes| an array of objects in the format: [{ data: [], size: 3, location: 0 }]
+    // |attributes| an array of objects in the format: [{ data: [], size: 3 }]
 
     function Vbo(gl, type, usage, attributes){
         this.gl    = gl;
@@ -73,7 +73,7 @@ Embr.Vbo = (function(){
         }
     }
 
-    Vbo.prototype.destroy = function(){
+    Vbo.prototype.dispose = function(){
         var gl = this.gl;
         for(var i = attributes.length; --i >= 0;)
             gl.deleteBuffer(attributes[i])
