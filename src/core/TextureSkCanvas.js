@@ -1,3 +1,5 @@
+// Skia Canvas Texture
+
 Embr.TextureSkCanvas = (function(){
 
     function TextureSkCanvas(gl, canvas, fmt){

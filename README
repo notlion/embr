@@ -1,0 +1,7 @@
+Embr is a helper library which attempts to enable sharing code between Plask and WebGL. It is considered experimental and under heavy development.
+
+Embr borrows ideas and code from the following:
+
+Cinder - http://github.com/cinder/Cinder
+Plask  - http://github.com/deanm/plask
+PreGL  - http://github.com/deanm/pregl
