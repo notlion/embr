@@ -3,6 +3,11 @@
 
 (function(){
 
+  var kPI  = 3.14159265358979323846264338327950288;
+  var kPI2 = 1.57079632679489661923132169163975144;
+  var kPI4 = 0.785398163397448309615660845819875721;
+  var k2PI = 6.28318530717958647692528676655900576;
+
   // A class representing a 3 dimensional point and/or vector.  There isn't a
   // good reason to differentiate between the two, and you often want to change
   // how you think about the same set of values.  So there is only "vector".
