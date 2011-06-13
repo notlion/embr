@@ -61,19 +61,15 @@
     return this;
   };
 
-  Vec3.prototype.added2 = function(a, b) {
-    return new Vec3(a.x + b.x,
-                    a.y + b.y,
-                    a.z + b.z);
-  };
-
   // Add a Vec3, this = this + b.
   Vec3.prototype.add = function(b) {
     return this.add2(this, b);
   };
 
   Vec3.prototype.added = function(b) {
-    return this.added2(this, b);
+    return new Vec3(this.x + b.x,
+                    this.y + b.y,
+                    this.z + b.z);
   };
 
   // Subtract two Vec3s, this = a - b.
@@ -85,19 +81,35 @@
     return this;
   };
 
-  Vec3.prototype.subbed2 = function(a, b) {
-    return new Vec3(a.x - b.x,
-                    a.y - b.y,
-                    a.z - b.z);
-  };
-
   // Subtract another Vec3, this = this - b.
   Vec3.prototype.sub = function(b) {
     return this.sub2(this, b);
   };
 
   Vec3.prototype.subbed = function(b) {
-    return this.subbed2(this, b);
+    return new Vec3(this.x - b.x,
+                    this.y - b.y,
+                    this.z - b.z);
+  };
+
+  // Multiply two Vec3s, this = a * b.
+  Vec3.prototype.mul2 = function(a, b) {
+    this.x = a.x * b.x;
+    this.y = a.y * b.y;
+    this.z = a.z * b.z;
+
+    return this;
+  };
+
+  // Multiply by another Vec3, this = this * b.
+  Vec3.prototype.mul = function(b) {
+    return this.mul2(this, b);
+  };
+
+  Vec3.prototype.mulled = function(b) {
+    return new Vec3(this.x * b.x,
+                    this.y * b.y,
+                    this.z * b.z);
   };
 
   // Multiply by a scalar.
@@ -186,18 +198,14 @@
     return this;
   };
 
-  Vec2.prototype.added2 = function(a, b) {
-    return new Vec2(a.x + b.x,
-                    a.y + b.y);
-  };
-
   // Add a Vec2, this = this + b.
   Vec2.prototype.add = function(b) {
     return this.add2(this, b);
   };
 
   Vec2.prototype.added = function(b) {
-    return this.added2(this, b);
+    return new Vec2(this.x + b.x,
+                    this.y + b.y);
   };
 
   // Subtract two Vec2s, this = a - b.
@@ -208,18 +216,32 @@
     return this;
   };
 
-  Vec2.prototype.subbed2 = function(a, b) {
-    return new Vec2(a.x - b.x,
-                    a.y - b.y);
-  };
-
   // Subtract another Vec2, this = this - b.
   Vec2.prototype.sub = function(b) {
     return this.sub2(this, b);
   };
 
   Vec2.prototype.subbed = function(b) {
-    return this.subbed2(this, b);
+    return new Vec2(this.x - b.x,
+                    this.y - b.y);
+  };
+
+  // Multiply two Vec2s, this = a * b.
+  Vec2.prototype.mul2 = function(a, b) {
+    this.x = a.x * b.x;
+    this.y = a.y * b.y;
+
+    return this;
+  };
+
+  // Multiply by another Vec2, this = this * b.
+  Vec2.prototype.mul = function(b) {
+    return this.mul2(this, b);
+  };
+
+  Vec2.prototype.mulled = function(b) {
+    return new Vec2(this.x * b.x,
+                    this.y * b.y);
   };
 
   // Multiply by a scalar.
@@ -494,7 +516,7 @@
     //
     // return makeFrustumAffine(xmin, xmax, ymin, ymax, znear, zfar);
 
-    var f = 1.0 / Math.tan(fovy * Math.PI / 360.0);
+    var f = 1.0 / Math.tan(fovy * kPI / 360.0);
     this.mul4x4r(
         f/aspect, 0,                         0,                         0,
                0, f,                         0,                         0,
