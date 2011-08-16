@@ -16,6 +16,7 @@ JS_FILES = \
 	src/core/PingPong.js \
 	src/core/Vbo.js \
 	src/core/Program.js \
+	src/core/Arcball.js \
 	src/material/Material.js \
 	src/material/ColorMaterial.js \
 	src/material/NormalMaterial.js
