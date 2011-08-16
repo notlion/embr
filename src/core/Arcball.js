@@ -19,8 +19,7 @@ Embr.Arcball = (function(){
 
             var len2 = pos.lengthSquared();
             if(len2 > 1){
-                pos.normalize();
-                // pos.scale(1 / Math.sqrt(len2));
+                pos.scale(1 / Math.sqrt(len2));
             }
             else {
                 pos.z = Math.sqrt(1 - len2);
