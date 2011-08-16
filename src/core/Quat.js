@@ -4,8 +4,12 @@ Embr.Quat = (function(){
 
     var kEpsilon = Math.pow(2, -24);
 
-    function Quat(){
-        this.reset();
+    function Quat(x, y, z, w){
+        this.x = x; this.y = y; this.z = z; this.w = w;
+    }
+
+    Quat.identity = function(){
+        return new Quat(0, 0, 0, 1);
     }
 
     Quat.prototype.set = function(x, y, z, w){
@@ -110,7 +114,7 @@ Embr.Quat = (function(){
 
 
     Quat.prototype.dup = function(){
-        return new Quat().set(this.x, this.y, this.z, this.w);
+        return new Quat(this.x, this.y, this.z, this.w);
     };
 
 
