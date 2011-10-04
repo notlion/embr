@@ -82,7 +82,7 @@ Embr.Vbo = (function(){
 
     // Plane
 
-    Vbo.makePlane = function(gl, x1, y1, x2, y2, loc_vtx, loc_txc){
+    Vbo.makePlane = function(gl, x1, y1, x2, y2){
         var positions = [ x1, y1, 0, x1, y2, 0, x2, y1, 0, x2, y2, 0 ];
         var texcoords = [ 0, 0, 0, 1, 1, 0, 1, 1 ];
         return new Embr.Vbo(gl, gl.TRIANGLE_STRIP, gl.STATIC_DRAW, {
@@ -94,7 +94,7 @@ Embr.Vbo = (function(){
 
     // Cube
 
-    Vbo.makeCube = function(gl, sx, sy, sz, loc_vtx, loc_nrm, loc_txc){
+    Vbo.makeCube = function(gl, sx, sy, sz){
         var positions = [ sx, sy, sz,  sx,-sy, sz,  sx,-sy,-sz,  sx, sy,-sz,  // +X
                           sx, sy, sz,  sx, sy,-sz, -sx, sy,-sz, -sx, sy, sz,  // +Y
                           sx, sy, sz, -sx, sy, sz, -sx,-sy, sz,  sx,-sy, sz,  // +Z
