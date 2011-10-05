@@ -36,12 +36,8 @@ plask.simpleWindow({
         var gl = this.gl;
         gl.enable(gl.DEPTH_TEST);
 
-        // Make Materials
+        // Make Material
         this.material_normal = new em.NormalMaterial(gl);
-        this.material_color  = new em.ColorMaterial(gl);
-        this.material_color.useUniforms({
-            color: new em.Vec4(1,1,0,1)
-        });
 
         // Make Cube
         this.cube = em.Vbo.makeCube(gl, 1, 1, 1);
