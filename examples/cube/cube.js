@@ -12,8 +12,7 @@ plask.simpleWindow({
         center:  true
     },
 
-    init: function()
-    {
+    init: function(){
         this.framerate(60);
 
         this.projection = new em.Mat4().perspective(60, this.width / this.height, 0.01, 8);
@@ -33,10 +32,10 @@ plask.simpleWindow({
 
         // Make Cube
         this.cube = em.Vbo.makeCube(gl, 1, 1, 1);
+        this.material_normal.assignLocations(this.cube);
     },
 
-    draw: function()
-    {
+    draw: function(){
         this.modelview.rotate(Math.sin(this.frametime) * 0.03, 0, 1, 0);
         this.modelview.rotate(Math.cos(this.frametime) * 0.07, 1, 0, 0);
 

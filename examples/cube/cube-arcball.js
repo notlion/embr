@@ -12,14 +12,13 @@ plask.simpleWindow({
         center:  true
     },
 
-    init: function()
-    {
+    init: function(){
         this.framerate(60);
 
         this.projection = new em.Mat4().perspective(60, this.width / this.height, 0.01, 8);
-        this.camera_mv  = new em.Mat4().lookAt( 0, 0,-4,  // Eye Position
-                                                0, 0, 0,  // Target Position
-                                                0, 1, 0); // Up Vector
+        this.camera_mv  = new em.Mat4().lookAt(0, 0,-4,  // Eye Position
+                                               0, 0, 0,  // Target Position
+                                               0, 1, 0); // Up Vector
 
         var arcball = this.arcball = new em.Arcball(
             new em.Vec2(this.width, this.height).scale(0.5),
@@ -43,8 +42,7 @@ plask.simpleWindow({
         this.cube = em.Vbo.makeCube(gl, 1, 1, 1);
     },
 
-    draw: function()
-    {
+    draw: function(){
         var gl = this.gl;
 
         // Clear Buffer
