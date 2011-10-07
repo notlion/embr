@@ -64,14 +64,9 @@ Embr.ColorMaterial = (function(){
     };
 
 
-    function ColorMaterial(gl, options){
+    return Embr.Util.extend(Embr.Material, function ColorMaterial(gl, options){
         options = Embr.Util.mergeOptions(default_options, options);
         Embr.Material.call(this, gl, src_vertex, src_fragment, options);
-    }
-
-    ColorMaterial.prototype = Object.create(Embr.Material.prototype);
-
-
-    return ColorMaterial;
+    });
 
 })();

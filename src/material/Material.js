@@ -28,7 +28,7 @@ Embr.Material = (function(){
         }
     }
 
-    Material.prototype = Object.create(Embr.Program.prototype);
+    Embr.Util.extend(Embr.Program, Material);
 
     Material.prototype.assignLocations = function(vbo){
         for(var attr in vbo.attributes){

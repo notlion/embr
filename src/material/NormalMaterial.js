@@ -32,14 +32,9 @@ Embr.NormalMaterial = (function(){
     };
 
 
-    function NormalMaterial(gl, options){
+    return Embr.Util.extend(Embr.Material, function NormalMaterial(gl, options){
         options = Embr.Util.mergeOptions(default_options, options);
         Embr.Material.call(this, gl, src_vertex, src_fragment, options);
-    }
-
-    NormalMaterial.prototype = Object.create(Embr.Material.prototype);
-
-
-    return NormalMaterial;
+    });
 
 })();

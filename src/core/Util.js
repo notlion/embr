@@ -16,6 +16,18 @@ Embr.Util = (function(){
         }
     }
 
+    function extend(parent, child){
+        for(var key in parent){
+            if(parent.hasOwnProperty(key))
+                child[key] = parent[key];
+        }
+        function ctor(){
+            this.constructor = child;
+        }
+        ctor.prototype = parent.prototype;
+        child.prototype = new ctor;
+        return child;
+    }
 
     function cloneOptions(options){
         var result = {};
@@ -42,10 +54,10 @@ Embr.Util = (function(){
         return result;
     }
 
-
     return {
-        glCheckErr:   glCheckErr,
+        glCheckErr: glCheckErr,
+        extend: extend,
         mergeOptions: mergeOptions
-    }
+    };
 
 })();
