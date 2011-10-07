@@ -34,7 +34,7 @@ plask.simpleWindow({
     {
         var gl = this.gl;
 
-        this.prog_noise.useUniforms({
+        this.prog_noise.use({
             u_mvp_matrix: this.projection,
             u_time:       this.frametime
         });

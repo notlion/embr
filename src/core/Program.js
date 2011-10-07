@@ -111,15 +111,12 @@ Embr.Program = (function(){
         return this;
     };
 
-    Program.prototype.use = function(){
+    Program.prototype.use = function(uniforms){
         this.gl.useProgram(this.handle);
-    };
-
-    Program.prototype.useUniforms = function(obj){
-        this.use();
-        var uniforms = this.uniforms;
-        for(var u in obj){
-            uniforms[u](obj[u]);
+        if(uniforms){
+            for(var name in uniforms){
+                this.uniforms[name](uniforms[name]);
+            }
         }
     };
 

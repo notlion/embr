@@ -51,7 +51,7 @@ plask.simpleWindow({
 
         var mv = this.camera_mv.dup().mul(this.arcball.orientation.toMat4())
 
-        this.material_normal.useUniforms({
+        this.material_normal.use({
             modelview:  mv,
             projection: this.projection
         });

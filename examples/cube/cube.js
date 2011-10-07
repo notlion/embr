@@ -26,7 +26,7 @@ plask.simpleWindow({
         // Make Materials
         this.material_normal = new em.NormalMaterial(gl);
         this.material_color  = new em.ColorMaterial(gl);
-        this.material_color.useUniforms({
+        this.material_color.use({
             color: new em.Vec4(1,1,0,1)
         });
 
@@ -45,7 +45,7 @@ plask.simpleWindow({
         gl.clearColor(0,0,0,1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        this.material_normal.useUniforms({
+        this.material_normal.use({
             modelview:  this.modelview,
             projection: this.projection
         });
