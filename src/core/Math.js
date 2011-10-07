@@ -12,6 +12,10 @@ Embr.randSym = function(max){
     return max * 2 * Math.random() - max;
 };
 
+Embr.lerp = function(min, max, t){
+    return min + (max - min) * t;
+};
+
 (function(){
 
     var kPI  = Embr.kPI  = Math.PI;
@@ -19,7 +23,7 @@ Embr.randSym = function(max){
     var kPI4 = Embr.kPI4 = Math.PI / 4;
     var k2PI = Embr.k2PI = Math.PI * 2;
 
-    // Random point on a sphere of radius
+    // Random point on a sphere
     Embr.randVec3 = function(radius){
         var phi      = Math.random() * k2PI;
         var costheta = Math.random() * 2 - 1;
