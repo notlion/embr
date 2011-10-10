@@ -25,7 +25,7 @@ plask.simpleWindow({
         this.smear_prog.link();
 
         this.color_mater = new em.ColorMaterial(gl);
-        this.color_mater.useUniforms({
+        this.color_mater.use({
             projection: this.projection,
             modelview:  new em.Mat4()
         });
@@ -33,7 +33,7 @@ plask.simpleWindow({
         this.tex_mater = new em.ColorMaterial(gl, {
             flags: { use_texture: true }
         });
-        this.tex_mater.useUniforms({
+        this.tex_mater.use({
             projection: this.projection,
             modelview:  new em.Mat4(),
             texture:    0,
@@ -65,7 +65,7 @@ plask.simpleWindow({
         this.pp.bind();
 
         var r = em.Noise.sn2(0, time / 10) * 0.1;
-        this.smear_prog.useUniforms({
+        this.smear_prog.use({
             u_mvp_matrix: this.projection.dup().rotate(r, 0,0,1).scale(1.04, 1.04, 1.04),
             u_time:       this.frametime / 4,
             u_scale:      0.01,

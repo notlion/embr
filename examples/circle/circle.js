@@ -1,5 +1,5 @@
 var plask = require("plask");
-var em = require("../embr-plask");
+var em = require("../../embr-plask");
 
 function makeDisc(gl, radius, num_segs){
     var positions = [ 0, 0 ];
@@ -36,7 +36,7 @@ plask.simpleWindow({
 
         this.circle = makeDisc(gl, 1, 32);
         this.material = new em.ColorMaterial(gl);
-        this.material.useUniforms({
+        this.material.use({
             color: new em.Vec4(1, 1, 0, 1),
             projection: new em.Mat4().perspective(60, this.width / this.height, 0.01, 8)
         });
