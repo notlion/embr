@@ -13,78 +13,84 @@ Embr.Vbo = (function(){
 
         this.attributes = {};
 
-        // First Pass. Create attribute buffers
-        var attr, size;
-        for(var name in attributes){
-            attr = attributes[name];
-            size = attr.size !== undefined ? attr.size : 1;
-
-            this.attributes[name] = { buffer: gl.createBuffer()
-                                    , target: attr.target !== undefined ? attr.target : (name === "index" ? gl.ELEMENT_ARRAY_BUFFER : gl.ARRAY_BUFFER)
-                                    , size: size
-                                    , length: Math.floor(attr.data.length / size)
-                                    , location: attr.location !== undefined ? attr.location : -1
-                                    };
-        }
-
-        this.update(attributes);
-
-        // If no indices are given we fall back to glDrawArrays
-        if(!this.attributes.index){
-            this.length = Number.MAX_VALUE;
-            for(var name in this.attributes)
-                this.length = Math.min(this.length, this.attributes[name].length);
-        }
+        if(attributes)
+            this.update(attributes);
     }
 
-    Vbo.prototype.update = function(attributes){
-        var attr, data, gl = this.gl;
-        for(var name in attributes){
-            if(name in this.attributes){
+    Vbo.prototype = {
+
+        update: function(attributes){
+            var attr, attr_in, data, gl = this.gl;
+            for(var name in attributes){
+                // Create new attribute buffers
+                if(!(name in this.attributes))
+                    this.attributes[name] = { buffer: gl.createBuffer() };
+
+                attr_in = attributes[name];
                 attr = this.attributes[name];
 
-                // Ensure data is a typed array
-                data = attributes[name].data;
-                if(attr.target === gl.ELEMENT_ARRAY_BUFFER && !(data instanceof Uint16Array))
-                    data = new Uint16Array(data);
-                else if(!(data instanceof Float32Array))
-                    data = new Float32Array(data);
+                attr.target   = attr_in.target || attr.target || (name === "index" ? gl.ELEMENT_ARRAY_BUFFER : gl.ARRAY_BUFFER);
+                attr.size     = attr_in.size || attr.size || 1;
+                attr.location = attr_in.location !== undefined ? attr_in.location // Location can be zero which means we need
+                              : attr.location !== undefined ? attr.location       // to check for undefined vs just falsy
+                              : -1;
 
-                gl.bindBuffer(attr.target, attr.buffer);
-                gl.bufferData(attr.target, data, this.usage);
+                data = attr_in.data;
+                if(data){
+                    attr.length = Math.floor(data.length / attr.size);
 
-                Embr.Util.glCheckErr(gl, "Error updating attribute '" + name + "'");
+                    // Ensure data is a typed array
+                    if(attr.target === gl.ELEMENT_ARRAY_BUFFER && !(data instanceof Uint16Array))
+                        data = new Uint16Array(data);
+                    else if(!(data instanceof Float32Array))
+                        data = new Float32Array(data);
+
+                    // Buffer data
+                    gl.bindBuffer(attr.target, attr.buffer);
+                    gl.bufferData(attr.target, data, this.usage);
+
+                    Embr.Util.glCheckErr(gl, "Error updating attribute '" + name + "'");
+                }
             }
-        }
-    }
 
-    Vbo.prototype.draw = function(){
-        var gl = this.gl;
-
-        for(var name in this.attributes){
-            var attr = this.attributes[name];
-            if(attr.target === gl.ARRAY_BUFFER && attr.location >= 0){
-                gl.bindBuffer(attr.target, attr.buffer);
-                gl.vertexAttribPointer(attr.location, attr.size, gl.FLOAT, false, 0, 0);
-                gl.enableVertexAttribArray(attr.location);
+            // If no indices are given we fall back to glDrawArrays
+            if(!this.attributes.index){
+                // Set length to minimum length of all attributes
+                this.length = Number.MAX_VALUE;
+                for(var name in this.attributes)
+                    this.length = Math.min(this.length, this.attributes[name].length);
             }
+        },
+
+        draw: function(){
+            var gl = this.gl;
+
+            for(var name in this.attributes){
+                var attr = this.attributes[name];
+                if(attr.target === gl.ARRAY_BUFFER && attr.location >= 0){
+                    gl.bindBuffer(attr.target, attr.buffer);
+                    gl.vertexAttribPointer(attr.location, attr.size, gl.FLOAT, false, 0, 0);
+                    gl.enableVertexAttribArray(attr.location);
+                }
+            }
+
+            var index = this.attributes.index;
+            if(index){
+                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, index.buffer);
+                gl.drawElements(this.type, index.length, gl.UNSIGNED_SHORT, 0);
+            }
+            else{
+                gl.drawArrays(this.type, 0, this.length);
+            }
+        },
+
+        dispose: function(){
+            var gl = this.gl;
+            for(var i = attributes.length; --i >= 0;)
+                gl.deleteBuffer(attributes[i])
         }
 
-        var index = this.attributes.index;
-        if(index){
-            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, index.buffer);
-            gl.drawElements(this.type, index.length, gl.UNSIGNED_SHORT, 0);
-        }
-        else{
-            gl.drawArrays(this.type, 0, this.length);
-        }
-    }
-
-    Vbo.prototype.dispose = function(){
-        var gl = this.gl;
-        for(var i = attributes.length; --i >= 0;)
-            gl.deleteBuffer(attributes[i])
-    }
+    };
 
 
     // Plane
