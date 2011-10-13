@@ -49,10 +49,8 @@ plask.simpleWindow({
         gl.clearColor(0, 0, 0, 1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        this.material.use();
-        this.material.uniforms.modelview(this.modelview);
-        this.material.assignLocations(this.circle);
-        this.circle.draw();
+        this.material.use({ modelview: this.modelview });
+        this.circle.draw(this.material);
 
         this.modelview.rotate(0.01, 0, 1, 0);
     }
