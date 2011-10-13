@@ -15,9 +15,9 @@ Embr.Fbo = (function(){
 
         for(var i = 0, n = formats.length, cai = 0; i < n; i++){
             var fmt = formats[i]
-            ,   target  = fmt.target  !== undefined ? fmt.target  : gl.TEXTURE_2D
-            ,   formati = fmt.formati !== undefined ? fmt.formati : gl.RGBA
-            ,   attach  = fmt.attach  !== undefined ? fmt.attach  : gl.COLOR_ATTACHMENT0 + cai++;
+            ,   target  = fmt.target  || gl.TEXTURE_2D
+            ,   formati = fmt.formati || gl.RGBA
+            ,   attach  = fmt.attach  || gl.COLOR_ATTACHMENT0 + cai++;
 
             // Renderbuffer Attachment (Depth, etc)
             if(target == gl.RENDERBUFFER){
@@ -31,12 +31,12 @@ Embr.Fbo = (function(){
 
             // Texture Attachment
             else{
-                var format     = fmt.format     !== undefined ? fmt.format     : gl.RGBA
-                ,   type       = fmt.type       !== undefined ? fmt.type       : gl.UNSIGNED_BYTE
-                ,   filter_min = fmt.filter_min !== undefined ? fmt.filter_min : gl.NEAREST
-                ,   filter_mag = fmt.filter_mag !== undefined ? fmt.filter_mag : gl.NEAREST
-                ,   wrap_s     = fmt.wrap_s     !== undefined ? fmt.wrap_s     : gl.CLAMP_TO_EDGE
-                ,   wrap_t     = fmt.wrap_t     !== undefined ? fmt.wrap_t     : gl.CLAMP_TO_EDGE
+                var format     = fmt.format     || gl.RGBA
+                ,   type       = fmt.type       || gl.UNSIGNED_BYTE
+                ,   filter_min = fmt.filter_min || gl.NEAREST
+                ,   filter_mag = fmt.filter_mag || gl.NEAREST
+                ,   wrap_s     = fmt.wrap_s     || gl.CLAMP_TO_EDGE
+                ,   wrap_t     = fmt.wrap_t     || gl.CLAMP_TO_EDGE
 
                 var tex_handle = gl.createTexture();
                 gl.bindTexture(target, tex_handle);
@@ -61,14 +61,17 @@ Embr.Fbo = (function(){
     }
 
     Fbo.prototype = {
+
         bind: function(){
             var gl = this.gl;
             gl.bindFramebuffer(gl.FRAMEBUFFER, this.handle);
         },
+
         unbind: function(){
             var gl = this.gl;
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         },
+
         bindTexture: function(i, unit){
             var gl  = this.gl
             ,   att = this.tex_attachments[i];
@@ -77,12 +80,14 @@ Embr.Fbo = (function(){
             gl.activeTexture(att.unit);
             gl.bindTexture(att.target, att.handle);
         },
+
         unbindTexture: function(i){
             var gl  = this.gl;
             var att = this.tex_attachments[i];
             gl.activeTexture(att.unit);
             gl.bindTexture(att.target, null);
         }
+
     };
 
     return Fbo;

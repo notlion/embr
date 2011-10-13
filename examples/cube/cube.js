@@ -32,7 +32,6 @@ plask.simpleWindow({
 
         // Make Cube
         this.cube = em.Vbo.makeCube(gl, 1, 1, 1);
-        this.material_normal.assignLocations(this.cube);
     },
 
     draw: function(){
@@ -49,8 +48,7 @@ plask.simpleWindow({
             modelview:  this.modelview,
             projection: this.projection
         });
-        this.material_normal.assignLocations(this.cube);
-        this.cube.draw();
+        this.cube.draw(this.material_normal);
 
         // Clear Depth Buffer only
         gl.clear(gl.DEPTH_BUFFER_BIT);
@@ -58,7 +56,6 @@ plask.simpleWindow({
         this.material_color.use();
         this.material_color.uniforms.modelview(this.modelview.dup().scale(0.5, 0.5, 0.5));
         this.material_color.uniforms.projection(this.projection);
-        this.material_color.assignLocations(this.cube);
-        this.cube.draw();
+        this.cube.draw(this.material_color);
     }
 });

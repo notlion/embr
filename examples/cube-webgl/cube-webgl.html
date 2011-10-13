@@ -32,7 +32,6 @@ function init(){
     em.run(document.getElementById("glcanvas"), {
 
         init: function(){
-
             this.framerate(60);
 
             this.projection = new em.Mat4().perspective(60, this.width / this.height, 0.01, 8);
@@ -52,18 +51,14 @@ function init(){
 
             // Make Cube
             this.cube = em.Vbo.makeCube(gl, 1, 1, 1);
-
         },
 
         step: function(){
-
             this.modelview.rotate(Math.sin(this.frametime) * 0.03, 0, 1, 0);
             this.modelview.rotate(Math.cos(this.frametime) * 0.07, 1, 0, 0);
-
         },
 
         draw: function(){
-
             var gl = this.gl;
 
             // Clear Buffer
@@ -74,8 +69,7 @@ function init(){
                 modelview:  this.modelview,
                 projection: this.projection
             });
-            this.material_normal.assignLocations(this.cube);
-            this.cube.draw();
+            this.cube.draw(this.material_normal);
 
             // Clear Depth Buffer only
             gl.clear(gl.DEPTH_BUFFER_BIT);
@@ -83,9 +77,7 @@ function init(){
             this.material_color.use();
             this.material_color.uniforms.modelview(this.modelview.dup().scale(0.5, 0.5, 0.5));
             this.material_color.uniforms.projection(this.projection);
-            this.material_color.assignLocations(this.cube);
-            this.cube.draw();
-
+            this.cube.draw(this.material_color);
         }
 
     });

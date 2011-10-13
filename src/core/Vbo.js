@@ -19,6 +19,12 @@ Embr.Vbo = (function(){
 
     Vbo.prototype = {
 
+        dispose: function(){
+            var gl = this.gl;
+            for(var i = attributes.length; --i >= 0;)
+                gl.deleteBuffer(attributes[i])
+        },
+
         update: function(attributes){
             var attr, attr_in, data, gl = this.gl;
             for(var name in attributes){
@@ -30,9 +36,9 @@ Embr.Vbo = (function(){
                 attr = this.attributes[name];
 
                 attr.target   = attr_in.target || attr.target || (name === "index" ? gl.ELEMENT_ARRAY_BUFFER : gl.ARRAY_BUFFER);
-                attr.size     = attr_in.size || attr.size || 1;
+                attr.size     = attr_in.size   || attr.size   || 1;
                 attr.location = attr_in.location !== undefined ? attr_in.location // Location can be zero which means we need
-                              : attr.location !== undefined ? attr.location       // to check for undefined vs just falsy
+                              : attr.location    !== undefined ? attr.location       // to check for undefined vs just falsy
                               : -1;
 
                 data = attr_in.data;
@@ -62,8 +68,13 @@ Embr.Vbo = (function(){
             }
         },
 
-        draw: function(){
+        draw: function(material){
             var gl = this.gl;
+
+            if(material){
+                material.assignLocations(this);
+                material.use();
+            }
 
             for(var name in this.attributes){
                 var attr = this.attributes[name];
@@ -82,12 +93,6 @@ Embr.Vbo = (function(){
             else{
                 gl.drawArrays(this.type, 0, this.length);
             }
-        },
-
-        dispose: function(){
-            var gl = this.gl;
-            for(var i = attributes.length; --i >= 0;)
-                gl.deleteBuffer(attributes[i])
         }
 
     };
