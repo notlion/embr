@@ -16,6 +16,10 @@ Embr.lerp = function(min, max, t){
     return min + (max - min) * t;
 };
 
+Embr.lmap = function(v, in_min, in_max, out_min, out_max){
+    return out_min + (out_max - out_min) * ((v - in_min) / (in_max - in_min));
+};
+
 (function(){
 
     var kPI  = Embr.kPI  = Math.PI;
