@@ -1,12 +1,10 @@
 var plask = require("plask");
 var em = require("../../src/main-plask");
 em.require([
-    "embr/core/Mat4",
-    "embr/core/Vec4",
-    "embr/core/Vbo",
+    "embr/core",
     "embr/material/ColorMaterial",
     "embr/material/NormalMaterial"
-], function(Mat4, Vec4, Vbo, ColorMaterial, NormalMaterial){
+], function(core, ColorMaterial, NormalMaterial){
     plask.simpleWindow({
 
         settings: {
@@ -20,10 +18,10 @@ em.require([
         init: function(){
             this.framerate(60);
 
-            this.projection = new Mat4().perspective(60, this.width / this.height, 0.01, 8);
-            this.modelview  = new Mat4().lookAt( 0, 0,-4,  // Eye Position
-                                                 0, 0, 0,  // Target Position
-                                                 0, 1, 0); // Up Vector
+            this.projection = new core.Mat4().perspective(60, this.width / this.height, 0.01, 8);
+            this.modelview  = new core.Mat4().lookAt( 0, 0,-4,  // Eye Position
+                                                      0, 0, 0,  // Target Position
+                                                      0, 1, 0); // Up Vector
 
             var gl = this.gl;
             gl.enable(gl.DEPTH_TEST);
@@ -32,11 +30,11 @@ em.require([
             this.material_normal = new NormalMaterial(gl);
             this.material_color  = new ColorMaterial(gl);
             this.material_color.use({
-                color: new Vec4(1,1,0,1)
+                color: new core.Vec4(1,1,0,1)
             });
 
             // Make Cube
-            this.cube = Vbo.makeCube(gl, 1, 1, 1);
+            this.cube = core.Vbo.makeCube(gl, 1, 1, 1);
         },
 
         draw: function(){

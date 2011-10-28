@@ -1,12 +1,10 @@
 var plask = require("plask");
 var em = require("../../src/main-plask");
 em.require([
-    "embr/core/Mat4",
-    "embr/core/Program",
-    "embr/core/Vbo",
+    "embr/core",
     "text!noise3D.glsl",
     "text!noise.glsl"
-], function(Mat4, Program, Vbo, glsl_noise3D, glsl_noise){
+], function(core, glsl_noise3D, glsl_noise){
     plask.simpleWindow({
 
         settings: {
@@ -20,15 +18,15 @@ em.require([
             this.framerate(60);
             var gl = this.gl;
 
-            this.projection = new Mat4().ortho(0, 1, 0, 1, -1, 1);
+            this.projection = new core.Mat4().ortho(0, 1, 0, 1, -1, 1);
 
             // Make Shaders
-            Program.include("noise3D.glsl", glsl_noise3D);
-            this.prog_noise = new Program(gl, glsl_noise);
+            core.Program.include("noise3D.glsl", glsl_noise3D);
+            this.prog_noise = new core.Program(gl, glsl_noise);
             this.prog_noise.link();
 
             // Make Plane (for rendering FBOs)
-            this.plane = Vbo.makePlane(gl, 0, 0, 1, 1);
+            this.plane = core.Vbo.makePlane(gl, 0, 0, 1, 1);
             this.plane.attributes.position.location = this.prog_noise.locations.a_position;
             this.plane.attributes.texcoord.location = this.prog_noise.locations.a_texcoord;
         },

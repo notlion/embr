@@ -2,17 +2,16 @@ define(function(){
 
     "use strict";
 
-    function Vec2(x, y) {
-      this.x = x; this.y = y;
+    function Vec2(x, y){
+        this.x = x; this.y = y;
     }
 
     Vec2.prototype = {
 
-        function(x, y){
+        set: function(x, y){
             this.x = x; this.y = y;
             return this;
         },
-
         setVec2: function(v){
             this.x = v.x; this.y = v.y;
             return this;
@@ -120,13 +119,13 @@ define(function(){
         },
 
         // Reflect a vector about the normal |n|. The vectors should both be unit.
-        reflect = function(n){
+        reflect: function(n){
             var s = this.dot(n) * 2;
             this.x -= n.x * s;
             this.y -= n.y * s;
             return this;
         },
-        reflected = function(n){
+        reflected: function(n){
             var s = this.dot(n) * 2;
             return new Vec2(this.x - n.x * s,
                             this.y - n.y * s);
