@@ -1,7 +1,7 @@
 define([
 
-    "core/Vec3",
-    "core/Quat"
+    "embr/core/Vec3",
+    "embr/core/Quat"
 
 ], function(Vec3, Quat){
 

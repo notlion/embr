@@ -1,7 +1,7 @@
 define([
 
-    "core/Util",
-    "core/Program"
+    "embr/core/Util",
+    "embr/core/Program"
 
 ], function(Util, Program){
 

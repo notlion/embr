@@ -3,7 +3,7 @@
 
 define([
 
-    "core/Fbo"
+    "embr/core/Fbo"
 
 ], function(Fbo){
 

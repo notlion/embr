@@ -1,7 +1,7 @@
 define([
 
-    "core/Util",
-    "material/Material"
+    "embr/core/Util",
+    "embr/material/Material"
 
 ], function(Util, Material){
 

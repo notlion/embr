@@ -2,7 +2,7 @@
 
 define([
 
-    "core/Util"
+    "embr/core/Util"
 
 ], function(Util){
 

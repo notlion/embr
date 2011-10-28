@@ -5,7 +5,7 @@
 
 define([
 
-    "core/Vec3"
+    "embr/core/Vec3"
 
 ], function(Vec3){
 

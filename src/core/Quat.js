@@ -2,7 +2,7 @@
 
 define([
 
-    "core/Mat4"
+    "embr/core/Mat4"
 
 ], function(Mat4){
 

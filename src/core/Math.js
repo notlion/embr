@@ -2,8 +2,8 @@
 
 define([
 
-    "core/Vec3",
-    "core/Mat4"
+    "embr/core/Vec3",
+    "embr/core/Mat4"
 
 ], function(Vec3, Mat4){
 

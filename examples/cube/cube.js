@@ -1,11 +1,11 @@
 var plask = require("plask");
 var em = require("../../src/main-plask");
 em.require([
-    "core/Mat4",
-    "core/Vec4",
-    "core/Vbo",
-    "material/ColorMaterial",
-    "material/NormalMaterial"
+    "embr/core/Mat4",
+    "embr/core/Vec4",
+    "embr/core/Vbo",
+    "embr/material/ColorMaterial",
+    "embr/material/NormalMaterial"
 ], function(Mat4, Vec4, Vbo, ColorMaterial, NormalMaterial){
     plask.simpleWindow({
 
