@@ -1,4 +1,11 @@
-Embr.Material = (function(){
+define([
+
+    "core/Util",
+    "core/Program"
+
+], function(Util, Program){
+
+    "use strict";
 
     function Material(gl, src_vertex, src_fragment, options){
         if(!src_fragment)
@@ -14,7 +21,7 @@ Embr.Material = (function(){
             src_fragment = src_prefix + src_fragment;
         }
 
-        Embr.Program.call(this, gl, src_vertex, src_fragment);
+        Program.call(this, gl, src_vertex, src_fragment);
         this.link();
 
         this.attribute_locations = {};
@@ -28,7 +35,7 @@ Embr.Material = (function(){
         }
     }
 
-    Embr.Util.extend(Embr.Program, Material);
+    Util.extend(Program, Material);
 
     Material.prototype.assignLocations = function(vbo){
         for(var attr in vbo.attributes){
@@ -42,4 +49,4 @@ Embr.Material = (function(){
 
     return Material;
 
-})();
+});

@@ -1,6 +1,11 @@
-Embr.Arcball = (function(){
+define([
 
-    var Vec3 = Embr.Vec3, Quat = Embr.Quat;
+    "core/Vec3",
+    "core/Quat"
+
+], function(Vec3, Quat){
+
+    "use strict";
 
     function Arcball(center, radius){
         this.center = center;
@@ -45,4 +50,4 @@ Embr.Arcball = (function(){
 
     return Arcball;
 
-})();
+});

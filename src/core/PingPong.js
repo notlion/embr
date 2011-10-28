@@ -1,34 +1,44 @@
 // Ping-Pong
 // Two swappable framebuffers. Used for feedback effects and GPGPU where it's necessary to access the state of the last iteration.
 
-Embr.PingPong = (function(){
+define([
+
+    "core/Fbo"
+
+], function(Fbo){
+
+    "use strict";
 
     function PingPong(gl, width, height, formats){
-        this.wbuffer = new Embr.Fbo(gl, width, height, formats);
-        this.rbuffer = new Embr.Fbo(gl, width, height, formats);
+        this.wbuffer = new Fbo(gl, width, height, formats);
+        this.rbuffer = new Fbo(gl, width, height, formats);
         this.swap();
     }
 
-    PingPong.prototype.swap = function(){
-        var tmp = this.wbuffer;
-        this.wbuffer = this.rbuffer;
-        this.rbuffer = tmp;
-    };
+    PingPong.prototype = {
 
-    PingPong.prototype.bind = function(){
-        this.wbuffer.bind();
-    };
-    PingPong.prototype.unbind = function(){
-        this.wbuffer.unbind();
-    };
+        swap: function(){
+            var tmp = this.wbuffer;
+            this.wbuffer = this.rbuffer;
+            this.rbuffer = tmp;
+        },
 
-    PingPong.prototype.bindTexture = function(){
-        this.rbuffer.bindTexture.apply(this.rbuffer, arguments);
-    };
-    PingPong.prototype.unbindTexture = function(){
-        this.rbuffer.unbindTexture.apply(this.rbuffer, arguments);
+        bind: function(){
+            this.wbuffer.bind();
+        },
+        unbind: function(){
+            this.wbuffer.unbind();
+        },
+
+        bindTexture: function(){
+            this.rbuffer.bindTexture.apply(this.rbuffer, arguments);
+        },
+        unbindTexture: function(){
+            this.rbuffer.unbindTexture.apply(this.rbuffer, arguments);
+        }
+
     };
 
     return PingPong;
 
-})();
+});

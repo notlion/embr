@@ -1,6 +1,12 @@
 // Vertex Buffer Object
 
-Embr.Vbo = (function(){
+define([
+
+    "core/Util"
+
+], function(Util){
+
+    "use strict";
 
     // |type| gl.POINTS, gl.TRIANGLES etc..
     // |usage| gl.STATIC_DRAW, gl.STREAM_DRAW or gl.DYNAMIC_DRAW
@@ -55,7 +61,7 @@ Embr.Vbo = (function(){
                     gl.bindBuffer(attr.target, attr.buffer);
                     gl.bufferData(attr.target, data, this.usage);
 
-                    Embr.Util.glCheckErr(gl, "Error updating attribute '" + name + "'");
+                    Util.glCheckErr(gl, "Error updating attribute '" + name + "'");
                 }
             }
 
@@ -103,7 +109,7 @@ Embr.Vbo = (function(){
     Vbo.makePlane = function(gl, x1, y1, x2, y2){
         var positions = [ x1, y1, 0, x1, y2, 0, x2, y1, 0, x2, y2, 0 ];
         var texcoords = [ 0, 0, 0, 1, 1, 0, 1, 1 ];
-        return new Embr.Vbo(gl, gl.TRIANGLE_STRIP, gl.STATIC_DRAW, {
+        return new Vbo(gl, gl.TRIANGLE_STRIP, gl.STATIC_DRAW, {
             position: { data: positions, size: 3 },
             texcoord: { data: texcoords, size: 2 }
         });
@@ -141,7 +147,7 @@ Embr.Vbo = (function(){
                        16,17,18,16,18,19,
                        20,21,22,20,22,23];
 
-        return new Embr.Vbo(gl, gl.TRIANGLES, gl.STATIC_DRAW, {
+        return new Vbo(gl, gl.TRIANGLES, gl.STATIC_DRAW, {
             position: { data: positions, size: 3 },
             normal:   { data: normals,   size: 3 },
             texcoord: { data: texcoords, size: 2 },
@@ -151,4 +157,4 @@ Embr.Vbo = (function(){
 
     return Vbo;
 
-})();
+});

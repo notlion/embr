@@ -6,3 +6,5 @@
 embr-plask.js
 embr-webgl.js
 embr-webgl.min.js
+
+node_modules/

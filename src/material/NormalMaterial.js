@@ -1,4 +1,11 @@
-Embr.NormalMaterial = (function(){
+define([
+
+    "core/Util",
+    "material/Material"
+
+], function(Util, Material){
+
+    "use strict";
 
     var src_vertex =
     [   "uniform mat4 modelview, projection;"
@@ -32,9 +39,9 @@ Embr.NormalMaterial = (function(){
     };
 
 
-    return Embr.Util.extend(Embr.Material, function NormalMaterial(gl, options){
-        options = Embr.Util.mergeOptions(default_options, options);
-        Embr.Material.call(this, gl, src_vertex, src_fragment, options);
+    return Util.extend(Material, function NormalMaterial(gl, options){
+        options = Util.mergeOptions(default_options, options);
+        Material.call(this, gl, src_vertex, src_fragment, options);
     });
 
-})();
+});

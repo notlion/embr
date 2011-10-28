@@ -1,7 +1,9 @@
 // Simplex Noise adapted from Stefan Gustavson's 2005 paper "Simplex Noise Demystified"
 // http://staffwww.itn.liu.se/~stegu/simplexnoise/simplexnoise.pdf
 
-Embr.Noise = (function(){
+define(function(){
+
+    "use strict";
 
     var grad3 = [[ 1, 1, 0],[-1, 1, 0],[ 1,-1, 0],[-1,-1, 0],
                  [ 1, 0, 1],[-1, 0, 1],[ 1, 0,-1],[-1, 0,-1],
@@ -198,4 +200,4 @@ Embr.Noise = (function(){
         sn3: sn3
     };
 
-})();
+});

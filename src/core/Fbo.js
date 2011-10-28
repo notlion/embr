@@ -1,6 +1,8 @@
 // Frame Buffer Object
 
-Embr.Fbo = (function(){
+define(function(){
+
+    "use strict";
 
     function Fbo(gl, width, height, formats){
         this.gl     = gl;
@@ -92,4 +94,4 @@ Embr.Fbo = (function(){
 
     return Fbo;
 
-})();
+});

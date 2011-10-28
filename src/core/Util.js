@@ -1,4 +1,6 @@
-Embr.Util = (function(){
+define(function(){
+
+    "use strict";
 
     var gl_enums = null;
 
@@ -60,4 +62,4 @@ Embr.Util = (function(){
         mergeOptions: mergeOptions
     };
 
-})();
+});

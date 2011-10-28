@@ -1,8 +1,12 @@
 // Quaternion
 
-Embr.Quat = (function(){
+define([
 
-    var kEpsilon = Math.pow(2, -24);
+    "core/Mat4"
+
+], function(Mat4){
+
+    "use strict";
 
     function Quat(x, y, z, w){
         this.x = x; this.y = y; this.z = z; this.w = w;
@@ -79,7 +83,7 @@ Embr.Quat = (function(){
         rotate: function(theta, x, y, z){
             var len = Math.sqrt(x*x + y*y + z*z)
 
-            if(len > kEpsilon){
+            if(len > 0){
                 var t2  = theta / 2
                 ,   st2 = Math.sin(t2);
                 this.mul4((x / len) * st2,
@@ -105,7 +109,7 @@ Embr.Quat = (function(){
             ,   yz = this.y * zs
             ,   zz = this.z * zs;
 
-            return new Embr.Mat4().set4x4r(
+            return new Mat4().set4x4r(
                 1 - (yy+zz), xy - wz,      xz + wy,     0,
                 xy + wz,     1 - (xx+zz ), yz - wx,     0,
                 xz - wy,     yz + wx,      1 - (xx+yy), 0,
@@ -121,4 +125,4 @@ Embr.Quat = (function(){
 
     return Quat;
 
-})();
+});

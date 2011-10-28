@@ -1,6 +1,8 @@
 // Texture
 
-Embr.Texture = (function(){
+define(function(){
+
+    "use strict";
 
     function Texture(gl, width, height, data, fmt){
         this.gl     = gl;
@@ -30,6 +32,7 @@ Embr.Texture = (function(){
     }
 
     Texture.prototype = {
+
         bind: function(unit){
             var gl = this.gl;
             if(unit !== undefined)
@@ -42,13 +45,15 @@ Embr.Texture = (function(){
             gl.activeTexture(this.unit);
             gl.bindTexture(this.target, null);
         },
+
         update: function(data){
             var gl = this.gl;
             gl.bindTexture(this.target, this.handle);
             gl.texSubImage2D(this.target, 0, 0, 0, this.width, this.height, this.format, this.type, data);
         }
+
     };
 
     return Texture;
 
-})();
+});

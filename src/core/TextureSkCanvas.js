@@ -1,6 +1,8 @@
 // Skia Canvas Texture
 
-Embr.TextureSkCanvas = (function(){
+define(function(){
+
+    "use strict";
 
     function TextureSkCanvas(gl, canvas, fmt){
         this.gl     = gl;
@@ -27,6 +29,7 @@ Embr.TextureSkCanvas = (function(){
     }
 
     TextureSkCanvas.prototype = {
+
         bind: function(unit){
             var gl = this.gl;
             if(unit !== undefined)
@@ -39,13 +42,15 @@ Embr.TextureSkCanvas = (function(){
             gl.activeTexture(this.unit);
             gl.bindTexture(this.target, null);
         },
+
         update: function(data){
             var gl = this.gl;
             gl.bindTexture(this.target, this.handle);
             gl.texSubImage2D(this.target, 0, 0, 0, this.width, this.height, this.format, this.type, data);
         }
+
     };
 
     return TextureSkCanvas;
 
-})();
+});

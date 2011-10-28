@@ -1,15 +1,7 @@
-var plask = require('plask')
-,   fs    = require('fs');
+var fs = require("fs");
+var requirejs = require("requirejs");
 
-var Embr = {};
-
-// Export Embr via CommonJS (for Node.js, etc)
-module.exports = Embr;
-
-
-// Define Plask specific overrides
-
-Embr.Vec2 = plask.Vec2;
-Embr.Vec3 = plask.Vec3;
-Embr.Vec4 = plask.Vec4;
-Embr.Mat4 = plask.Mat4;
+exports.require = requirejs.config({
+    nodeRequire: require,
+    baseUrl: __dirname
+});
