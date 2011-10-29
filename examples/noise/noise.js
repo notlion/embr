@@ -1,18 +1,17 @@
 var plask = require("plask");
-var em = require("../../src/main-plask");
+var em    = require("../../src/main-plask");
+
 em.require([
     "embr/core",
     "text!noise3D.glsl",
     "text!noise.glsl"
 ], function(core, glsl_noise3D, glsl_noise){
     plask.simpleWindow({
-
         settings: {
             type: "3d",
             width: 512,
             height: 512
         },
-
         init: function()
         {
             this.framerate(60);
@@ -30,7 +29,6 @@ em.require([
             this.plane.attributes.position.location = this.prog_noise.locations.a_position;
             this.plane.attributes.texcoord.location = this.prog_noise.locations.a_texcoord;
         },
-
         draw: function()
         {
             var gl = this.gl;
@@ -41,6 +39,5 @@ em.require([
             });
             this.plane.draw();
         }
-
     });
 });

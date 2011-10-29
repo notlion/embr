@@ -70,7 +70,7 @@ define([
         normalize: function(){
             var len = this.length();
 
-            if(len > kEpsilon){
+            if(len > 0){
                 this.x /= len
                 this.y /= len
                 this.z /= len

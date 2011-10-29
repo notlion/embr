@@ -13,16 +13,14 @@ var names = [
     "Texture",
     "Vbo",
     "Fbo",
-    "PingPong",
-
-    "Arcball"
+    "PingPong"
 ];
 
 define(names.map(function(name){
     return "embr/core/" + name;
 }), function(){
-    var core = {};
+    var module = {};
     for(var i = names.length; --i >= 0;)
-        core[names[i]] = arguments[i];
-    return core;
+        module[names[i]] = arguments[i];
+    return module;
 });

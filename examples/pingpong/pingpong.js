@@ -1,5 +1,6 @@
 var plask = require('plask');
-var em = require('../../src/main-plask');
+var em    = require('../../src/main-plask');
+
 em.require([
     "embr/core",
     "embr/material/Material",
@@ -8,13 +9,11 @@ em.require([
     "text!smear.glsl"
 ], function(core, Material, ColorMaterial, glsl_noise3D, glsl_smear){
     plask.simpleWindow({
-
         settings: {
             type: "3d",
             width: 512,
             height: 512
         },
-
         init: function(){
             var gl = this.gl;
 
@@ -58,7 +57,6 @@ em.require([
 
             this.framerate(60);
         },
-
         draw: function(){
             var gl = this.gl;
 
@@ -104,6 +102,5 @@ em.require([
 
             this.pp.swap();
         }
-
     });
 });

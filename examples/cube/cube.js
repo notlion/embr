@@ -1,12 +1,12 @@
 var plask = require("plask");
-var em = require("../../src/main-plask");
+var em    = require("../../src/main-plask");
+
 em.require([
     "embr/core",
     "embr/material/ColorMaterial",
     "embr/material/NormalMaterial"
 ], function(core, ColorMaterial, NormalMaterial){
     plask.simpleWindow({
-
         settings: {
             type:   "3d",
             width:  512,
@@ -14,7 +14,6 @@ em.require([
             vsync:  true,
             center: true
         },
-
         init: function(){
             this.framerate(60);
 
@@ -36,7 +35,6 @@ em.require([
             // Make Cube
             this.cube = core.Vbo.makeCube(gl, 1, 1, 1);
         },
-
         draw: function(){
             this.modelview.rotate(Math.sin(this.frametime) * 0.03, 0, 1, 0);
             this.modelview.rotate(Math.cos(this.frametime) * 0.07, 1, 0, 0);
@@ -61,6 +59,5 @@ em.require([
             this.material_color.uniforms.projection(this.projection);
             this.cube.draw(this.material_color);
         }
-
     });
 });

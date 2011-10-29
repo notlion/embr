@@ -10,7 +10,7 @@ define([
     function Arcball(center, radius){
         this.center = center;
         this.radius = radius;
-        this.orientation = Embr.Quat.identity();
+        this.orientation = Quat.identity();
     }
 
     Arcball.prototype = {
