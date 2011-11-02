@@ -3,11 +3,11 @@ var em    = require('../../src/main-plask');
 
 em.require([
     "embr/core",
-    "embr/material/Material",
-    "embr/material/ColorMaterial",
+    "embr/noise",
+    "embr/material",
     "text!noise3D.glsl",
     "text!smear.glsl"
-], function(core, Material, ColorMaterial, glsl_noise3D, glsl_smear){
+], function(core, noise, material, glsl_noise3D, glsl_smear){
     plask.simpleWindow({
         settings: {
             type: "3d",
@@ -22,20 +22,20 @@ em.require([
             // Make Shaders
             core.Program.include("noise3D.glsl", glsl_noise3D);
 
-            this.m_smear = new Material(gl, glsl_smear, null, {
+            this.m_smear = new material.Material(gl, glsl_smear, null, {
                 attributes: {
                     position: "a_position",
                     texcoord: "a_texcoord"
                 }
             });
 
-            this.m_color = new ColorMaterial(gl);
+            this.m_color = new material.ColorMaterial(gl);
             this.m_color.use({
                 projection: this.projection,
                 modelview:  new core.Mat4()
             });
 
-            this.m_texture = new ColorMaterial(gl, {
+            this.m_texture = new material.ColorMaterial(gl, {
                 flags: { use_texture: true }
             });
             this.m_texture.use({
@@ -70,7 +70,7 @@ em.require([
             this.m_smear.uniforms.u_scale( 0.01 );
             this.m_smear.uniforms.u_tex( 0 );
 
-            var r = core.Noise.sn2(0, this.frametime / 10) * 0.1;
+            var r = noise.sn2(0, this.frametime / 10) * 0.1;
             this.m_smear.uniforms.u_mvp_matrix(
                 this.projection.dup().rotate(r, 0, 0, 1).scale(1.03, 1.03, 1.03)
             );

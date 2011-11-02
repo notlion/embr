@@ -5,9 +5,8 @@ var names = [
     "Mat4",
     "Quat",
 
-    "Math",
-    "Util",
-    "Noise",
+    "math",
+    "util",
 
     "Program",
     "Texture",
