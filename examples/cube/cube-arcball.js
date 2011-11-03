@@ -39,7 +39,7 @@ em.require([
             this.material_normal = new material.NormalMaterial(gl);
 
             // Make Cube
-            this.cube = core.Vbo.makeCube(gl, 1, 1, 1);
+            this.cube = core.Vbo.createBox(gl, 1, 1, 1);
         },
         draw: function(){
             var gl = this.gl;

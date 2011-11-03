@@ -106,7 +106,7 @@ define([
 
     // Plane
 
-    Vbo.makePlane = function(gl, x1, y1, x2, y2){
+    Vbo.createPlane = function(gl, x1, y1, x2, y2){
         var positions = [ x1, y1, 0, x1, y2, 0, x2, y1, 0, x2, y2, 0 ];
         var texcoords = [ 0, 0, 0, 1, 1, 0, 1, 1 ];
         return new Vbo(gl, gl.TRIANGLE_STRIP, gl.STATIC_DRAW, {
@@ -116,9 +116,9 @@ define([
     }
 
 
-    // Cube
+    // Box
 
-    Vbo.makeCube = function(gl, sx, sy, sz){
+    Vbo.createBox = function(gl, sx, sy, sz){
         var positions = [ sx, sy, sz,  sx,-sy, sz,  sx,-sy,-sz,  sx, sy,-sz,  // +X
                           sx, sy, sz,  sx, sy,-sz, -sx, sy,-sz, -sx, sy, sz,  // +Y
                           sx, sy, sz, -sx, sy, sz, -sx,-sy, sz,  sx,-sy, sz,  // +Z

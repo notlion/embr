@@ -25,7 +25,7 @@ em.require([
             this.prog_noise.link();
 
             // Make Plane (for rendering FBOs)
-            this.plane = core.Vbo.makePlane(gl, 0, 0, 1, 1);
+            this.plane = core.Vbo.createPlane(gl, 0, 0, 1, 1);
             this.plane.attributes.position.location = this.prog_noise.locations.a_position;
             this.plane.attributes.texcoord.location = this.prog_noise.locations.a_texcoord;
         },

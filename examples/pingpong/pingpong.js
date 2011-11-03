@@ -52,8 +52,8 @@ em.require([
             ]);
 
             // Make Plane
-            this.plane = core.Vbo.makePlane(gl, -1, -1, 1, 1);
-            this.cube = core.Vbo.makeCube(gl, 0.05, 0.05, 0.05);
+            this.plane = core.Vbo.createPlane(gl, -1, -1, 1, 1);
+            this.cube = core.Vbo.createBox(gl, 0.05, 0.05, 0.05);
 
             this.framerate(60);
         },
