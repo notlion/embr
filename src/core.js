@@ -1,25 +1,29 @@
-var names = [
-    "Vec2",
-    "Vec3",
-    "Vec4",
-    "Mat4",
-    "Quat",
+(function(){
 
-    "math",
-    "util",
+    var names = [
+        "Vec2",
+        "Vec3",
+        "Vec4",
+        "Mat4",
+        "Quat",
 
-    "Program",
-    "Texture",
-    "Vbo",
-    "Fbo",
-    "PingPong"
-];
+        "math",
+        "util",
 
-define(names.map(function(name){
-    return "embr/core/" + name;
-}), function(){
-    var module = {};
-    for(var i = names.length; --i >= 0;)
-        module[names[i]] = arguments[i];
-    return module;
-});
+        "Program",
+        "Texture",
+        "Vbo",
+        "Fbo",
+        "PingPong"
+    ];
+
+    define(names.map(function(name){
+        return "embr/core/" + name;
+    }), function(){
+        var exports = {};
+        for(var i = names.length; --i >= 0;)
+            exports[names[i]] = arguments[i];
+        return exports;
+    });
+
+})();
