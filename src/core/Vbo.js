@@ -61,7 +61,7 @@ define([
                     gl.bindBuffer(attr.target, attr.buffer);
                     gl.bufferData(attr.target, data, this.usage);
 
-                    Util.glCheckErr(gl, "Error updating attribute '" + name + "'");
+                    // Util.glCheckErr(gl, "Error updating attribute '" + name + "'");
                 }
             }
 
