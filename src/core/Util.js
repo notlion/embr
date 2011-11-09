@@ -5,8 +5,10 @@ define(function(){
     var gl_enums = null;
 
     function glCheckErr(gl, msg){
-        var err = gl.getError();
-        if(err !== gl.NO_ERROR){
+        var err, errs = [];
+        while((err = gl.getError()) !== gl.NO_ERROR)
+            errs.push(err);
+        if(errs.length > 0){
             if(gl_enums === null){
                 gl_enums = {};
                 for(var name in gl){
@@ -14,8 +16,29 @@ define(function(){
                         gl_enums[gl[name]] = name;
                 }
             }
-            throw msg + " (" + gl_enums[err] + ")";
+            throw msg + " (" + errs.map(function(err){
+                return gl_enums[err]
+            }).join(", ") + ")";
         }
+    }
+
+    function glWrapContextWithErrorChecks(gl){
+        var key, property, gl_wrapped = {};
+        for(key in gl){
+            property = gl[key];
+            if(typeof(property) === "function"){
+                gl_wrapped[key] = (function(key, func){
+                    return function(){
+                        var result = func.apply(gl, arguments);
+                        glCheckErr(gl, "GL Error in " + key);
+                        return result;
+                    };
+                })(key, property);
+            }
+            else
+                gl_wrapped[key] = property;
+        }
+        return gl_wrapped;
     }
 
     function extend(parent, child){
@@ -58,6 +81,7 @@ define(function(){
 
     return {
         glCheckErr: glCheckErr,
+        glWrapContextWithErrorChecks: glWrapContextWithErrorChecks,
         extend: extend,
         mergeOptions: mergeOptions
     };

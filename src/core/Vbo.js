@@ -44,7 +44,7 @@ define([
                 attr.target   = attr_in.target || attr.target || (name === "index" ? gl.ELEMENT_ARRAY_BUFFER : gl.ARRAY_BUFFER);
                 attr.size     = attr_in.size   || attr.size   || 1;
                 attr.location = attr_in.location !== undefined ? attr_in.location // Location can be zero which means we need
-                              : attr.location    !== undefined ? attr.location       // to check for undefined vs just falsy
+                              : attr.location    !== undefined ? attr.location    // to check for undefined vs just falsy
                               : -1;
 
                 data = attr_in.data;
@@ -60,8 +60,6 @@ define([
                     // Buffer data
                     gl.bindBuffer(attr.target, attr.buffer);
                     gl.bufferData(attr.target, data, this.usage);
-
-                    // Util.glCheckErr(gl, "Error updating attribute '" + name + "'");
                 }
             }
 
