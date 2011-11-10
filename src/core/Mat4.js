@@ -310,6 +310,12 @@ define([
                                      this.a12, this.a22, this.a32, this.a42,
                                      this.a13, this.a23, this.a33, this.a43,
                                      this.a14, this.a24, this.a34, this.a44]);
+        },
+
+        to3x3Float32Array: function(){
+            return new Float32Array([this.a11, this.a21, this.a31,
+                                     this.a12, this.a22, this.a32,
+                                     this.a13, this.a23, this.a33]);
         }
 
     };

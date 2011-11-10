@@ -86,6 +86,10 @@ define(function(){
                         return function(v){
                             gl.uniform4f(location, v.x, v.y, v.z, v.w);
                         };
+                    case gl.FLOAT_MAT3:
+                        return function(mat4){
+                            gl.uniformMatrix3fv(location, false, mat4.to3x3Float32Array());
+                        };
                     case gl.FLOAT_MAT4:
                         return function(mat4){
                             gl.uniformMatrix4fv(location, false, mat4.toFloat32Array());

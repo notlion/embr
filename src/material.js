@@ -3,7 +3,8 @@
     var names = [
         "Material",
         "ColorMaterial",
-        "NormalMaterial"
+        "NormalMaterial",
+        "LambertMaterial"
     ];
 
     define(names.map(function(name){
