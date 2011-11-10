@@ -8,7 +8,7 @@ define(function(){
     ,   includes = {};
 
     function processIncludes(src){
-        var match, re = /^ *#include +"([\w\-\.]+)"/gm;
+        var match, re = /^[ \t]*#include +"([\w\-\.]+)"/gm;
         while(match = re.exec(src)){
             var fn = match[1];
             if(fn in includes){
@@ -51,8 +51,8 @@ define(function(){
     Program.prototype = {
 
         link: function(){
-            var gl     = this.gl
-            ,   handle = this.handle;
+            var gl = this.gl, handle = this.handle;
+
             gl.attachShader(handle, this.shader_vert);
             gl.attachShader(handle, this.shader_frag);
             gl.linkProgram(handle);
@@ -103,18 +103,19 @@ define(function(){
             this.uniforms  = {};
             this.locations = {};
 
+            var i, info, location;
             var nu = gl.getProgramParameter(handle, gl.ACTIVE_UNIFORMS);
-            for(var i = 0; i < nu; ++i){
-                var info     = gl.getActiveUniform(handle, i);
-                var location = gl.getUniformLocation(handle, info.name);
+            for(i = 0; i < nu; ++i){
+                info     = gl.getActiveUniform(handle, i);
+                location = gl.getUniformLocation(handle, info.name);
                 this.uniforms[info.name] = makeUniformSetter(info.type, location);
                 this.locations[info.name] = location;
             }
 
             var na = gl.getProgramParameter(handle, gl.ACTIVE_ATTRIBUTES);
-            for(var i = 0; i < na; ++i){
-                var info     = gl.getActiveAttrib(handle, i);
-                var location = gl.getAttribLocation(handle, info.name);
+            for(i = 0; i < na; ++i){
+                info     = gl.getActiveAttrib(handle, i);
+                location = gl.getAttribLocation(handle, info.name);
                 this.locations[info.name] = location;
             }
 
