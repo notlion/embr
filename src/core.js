@@ -8,7 +8,7 @@
         "Quat",
 
         "math",
-        "util",
+        "Util",
 
         "Program",
         "Texture",
