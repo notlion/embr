@@ -4,57 +4,60 @@ define(function(){
 
     var kShaderPrefix         = "#ifdef GL_ES\nprecision highp float;\n#endif\n"
     ,   kVertexShaderPrefix   = kShaderPrefix + "#define EM_VERTEX\n"
-    ,   kFragmentShaderPrefix = kShaderPrefix + "#define EM_FRAGMENT\n"
-    ,   includes = {};
+    ,   kFragmentShaderPrefix = kShaderPrefix + "#define EM_FRAGMENT\n";
 
-    function processIncludes(src){
-        var match, re = /^[ \t]*#include +"([\w\-\.]+)"/gm;
-        while(match = re.exec(src)){
-            var fn = match[1];
-            if(fn in includes){
-                var incl_src = includes[fn];
-                src = src.replace(new RegExp(match[0]), incl_src);
-                re.lastIndex = match.index + incl_src.length;
-            }
-        }
-        return src;
-    }
+    // function processIncludes(src){
+    //     var match, re = /^[ \t]*#include +"([\w\-\.]+)"/gm;
+    //     while(match = re.exec(src)){
+    //         var fn = match[1];
+    //         if(fn in includes){
+    //             var incl_src = includes[fn];
+    //             src = src.replace(new RegExp(match[0]), incl_src);
+    //             re.lastIndex = match.index + incl_src.length;
+    //         }
+    //     }
+    //     return src;
+    // }
 
-    function include(name, src){
-        includes[name] = src;
-    }
+    // function include(name, src){
+    //     includes[name] = src;
+    // }
 
 
-    function Program(gl, src_vertex, src_fragment){
+    function Program(gl, src_vert, src_frag){
         this.gl = gl;
 
-        src_vertex   = processIncludes(src_vertex);
-        src_fragment = src_fragment ? processIncludes(src_fragment) : src_vertex;
-
-        var sv = this.shader_vert = gl.createShader(gl.VERTEX_SHADER);
-        gl.shaderSource(sv, kVertexShaderPrefix + src_vertex);
-        gl.compileShader(sv);
-        if(gl.getShaderParameter(sv, gl.COMPILE_STATUS) !== true)
-            throw gl.getShaderInfoLog(sv);
-
-        var sf = this.shader_frag = gl.createShader(gl.FRAGMENT_SHADER);
-        gl.shaderSource(sf, kFragmentShaderPrefix + src_fragment);
-        gl.compileShader(sf);
-        if(gl.getShaderParameter(sf, gl.COMPILE_STATUS) !== true)
-            throw gl.getShaderInfoLog(sf);
-
         this.handle = gl.createProgram();
+        this.shader_vert = gl.createShader(gl.VERTEX_SHADER);
+        this.shader_frag = gl.createShader(gl.FRAGMENT_SHADER);
+
+        gl.attachShader(this.handle, this.shader_vert);
+        gl.attachShader(this.handle, this.shader_frag);
     }
 
-    Program.include = include;
-
     Program.prototype = {
+
+        compile: function(src_vert, src_frag){
+            var gl = this.gl;
+
+            if(src_vert){
+                gl.shaderSource(this.shader_vert, kVertexShaderPrefix + src_vert);
+                gl.compileShader(this.shader_vert);
+                if(gl.getShaderParameter(this.shader_vert, gl.COMPILE_STATUS) !== true)
+                    throw gl.getShaderInfoLog(this.shader_vert);
+            }
+
+            if(src_frag){
+                gl.shaderSource(this.shader_frag, kFragmentShaderPrefix + src_frag);
+                gl.compileShader(this.shader_frag);
+                if(gl.getShaderParameter(this.shader_frag, gl.COMPILE_STATUS) !== true)
+                    throw gl.getShaderInfoLog(this.shader_frag);
+            }
+        },
 
         link: function(){
             var gl = this.gl, handle = this.handle;
 
-            gl.attachShader(handle, this.shader_vert);
-            gl.attachShader(handle, this.shader_frag);
             gl.linkProgram(handle);
             if(gl.getProgramParameter(handle, gl.LINK_STATUS) !== true)
                 throw gl.getProgramInfoLog(handle);
@@ -100,7 +103,7 @@ define(function(){
                 };
             }
 
-            this.uniforms  = {};
+            this.uniforms = {};
             this.locations = {};
 
             var i, info, location;
@@ -120,6 +123,13 @@ define(function(){
             }
 
             return this;
+        },
+
+        assignLocations: function(vbo){
+            for(var attr in vbo.attributes){
+                if(attr in this.locations)
+                    vbo.attributes[attr].location = this.locations[attr];
+            }
         },
 
         use: function(uniforms){

@@ -72,12 +72,12 @@ define([
             }
         },
 
-        draw: function(material){
+        draw: function(prog){
             var gl = this.gl;
 
-            if(material){
-                material.assignLocations(this);
-                material.use();
+            if(prog){
+                prog.assignLocations(this);
+                prog.use();
             }
 
             for(var name in this.attributes){

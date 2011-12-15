@@ -7,9 +7,8 @@ define([
 
     "use strict";
 
-    function Material(gl, src_vertex, src_fragment, options){
-        if(!src_fragment)
-            src_fragment = src_vertex;
+    function Material(gl, src_vert, src_frag, options){
+        Program.call(this, gl);
 
         if(options && options.flags){
             var src_prefix = "";
@@ -17,11 +16,11 @@ define([
                 if(options.flags[o])
                     src_prefix += "#define " + o + "\n";
             }
-            src_vertex   = src_prefix + src_vertex;
-            src_fragment = src_prefix + src_fragment;
+            src_vert = src_prefix + src_vert;
+            src_frag = src_prefix + src_frag;
         }
 
-        Program.call(this, gl, src_vertex, src_fragment);
+        this.compile(src_vert, src_frag);
         this.link();
 
         this.attribute_locations = {};
