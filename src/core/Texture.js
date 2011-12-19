@@ -12,7 +12,7 @@ define(function(){
     Texture.prototype = {
 
         dispose: function(){
-            gl.deleteTexture(this.handle);
+            this.gl.deleteTexture(this.handle);
         },
 
         updateFormat: function(fmt){
