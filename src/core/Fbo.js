@@ -38,7 +38,7 @@ define(function(){
                 ,   filter_min = fmt.filter_min || gl.NEAREST
                 ,   filter_mag = fmt.filter_mag || gl.NEAREST
                 ,   wrap_s     = fmt.wrap_s     || gl.CLAMP_TO_EDGE
-                ,   wrap_t     = fmt.wrap_t     || gl.CLAMP_TO_EDGE
+                ,   wrap_t     = fmt.wrap_t     || gl.CLAMP_TO_EDGE;
 
                 var tex_handle = gl.createTexture();
                 gl.bindTexture(target, tex_handle);
