@@ -136,7 +136,8 @@ define(function(){
             this.gl.useProgram(this.handle);
             if(uniforms){
                 for(var name in uniforms){
-                    this.uniforms[name](uniforms[name]);
+                    if(name in this.uniforms)
+                        this.uniforms[name](uniforms[name]);
                 }
             }
         },
