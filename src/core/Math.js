@@ -35,6 +35,10 @@ define([
         return out_min + (out_max - out_min) * ((v - in_min) / (in_max - in_min));
     };
 
+    math.clamp = function(v, min, max){
+        return (v < min) ? min : ((v > max) ? max : v);
+    };
+
     // Random point on a sphere
     math.randVec3 = function(radius){
         var phi      = Math.random() * k2PI;
