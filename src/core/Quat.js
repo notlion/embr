@@ -95,6 +95,71 @@ define([
             return this;
         },
 
+        slerp: function(q, t){
+            // get cosine of "angle" between quaternions
+            var ct = this.dot(q);
+            var start, end, theta, recit_st;
+
+            // if "angle" between quaternions is less than 90 degrees
+            if(ct >= 0){
+                // if angle is greater than zero
+                if(1 - ct > 0){
+                    // use standard slerp
+                    theta = Math.acos(ct);
+                    recip_st = 1 / Math.sin(theta);
+
+                    start = Math.sin((1 - t) * theta) * recip_st;
+                    end = Math.sin(t * theta) * recip_st;
+                }
+                // angle is close to zero
+                else {
+                    // use linear interpolation
+                    start = 1 - t;
+                    end = t;
+                }
+            }
+            // otherwise, take the shorter route
+            else{
+                // if angle is less than 180 degrees
+                if(1 + ct > 0){
+                    // use slerp w/negation of start quaternion
+                    theta = Math.acos(-ct);
+                    recip_st = 1 / Math.sin(theta);
+
+                    start = Math.sin((t - 1) * theta) * recip_st;
+                    end = Math.sin(t * theta) * recip_st;
+                }
+                // angle is close to 180 degrees
+                else {
+                    // use lerp w/negation of start quaternion
+                    start = t - 1;
+                    end = t;
+                }
+            }
+
+            return this.set(
+                this.x * start + q.x * end,
+                this.y * start + q.y * end,
+                this.z * start + q.z * end,
+                this.w * start + q.w * end
+            );
+        },
+
+        getPitch: function(){
+            var x = this.x, y = this.y, z = this.z, w = this.w;
+            return Math.asin(2 * (w*y + z*x));
+        },
+
+        getYaw: function(){
+            var x = this.x, y = this.y, z = this.z, w = this.w;
+            return Math.atan2(2 * (w*z + x*y), 1 - 2 * (y*y + z*z));
+        },
+
+        getRoll: function(){
+            var x = this.x, y = this.y, z = this.z, w = this.w;
+            return Math.atan2(2 * (w*x + y*z), 1 - 2 * (x*x + y*y));
+        },
+
         toMat4: function(){
             var xs = this.x + this.x
             ,   ys = this.y + this.y
