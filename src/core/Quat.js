@@ -98,7 +98,7 @@ define([
         slerp: function(q, t){
             // get cosine of "angle" between quaternions
             var ct = this.dot(q);
-            var start, end, theta, recit_st;
+            var start, end, theta, recip_st;
 
             // if "angle" between quaternions is less than 90 degrees
             if(ct >= 0){
@@ -143,21 +143,6 @@ define([
                 this.z * start + q.z * end,
                 this.w * start + q.w * end
             );
-        },
-
-        getPitch: function(){
-            var x = this.x, y = this.y, z = this.z, w = this.w;
-            return Math.asin(2 * (w*y + z*x));
-        },
-
-        getYaw: function(){
-            var x = this.x, y = this.y, z = this.z, w = this.w;
-            return Math.atan2(2 * (w*z + x*y), 1 - 2 * (y*y + z*z));
-        },
-
-        getRoll: function(){
-            var x = this.x, y = this.y, z = this.z, w = this.w;
-            return Math.atan2(2 * (w*x + y*z), 1 - 2 * (x*x + y*y));
         },
 
         toMat4: function(){
