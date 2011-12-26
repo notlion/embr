@@ -11,16 +11,20 @@ define([
         this.center = center;
         this.radius = radius;
         this.orientation = Quat.identity();
+        this.inverted = false;
     }
 
     Arcball.prototype = {
 
-        screenToSphere: function(x, y){
+        screenToSphere: function(x, y, invert){
             var pos = new Vec3(
-                (x - this.center.x) / (this.radius * 2),
-                (y - this.center.y) / (this.radius * 2),
+                (x - this.center.x) / this.radius,
+                (y - this.center.y) / this.radius,
                 0
             );
+
+            if(this.inverted)
+                pos.scale(-1);
 
             var len2 = pos.lengthSquared();
             if(len2 > 1){
