@@ -22,6 +22,10 @@ define([
             this.x = x; this.y = y; this.z = z; this.w = w;
             return this;
         },
+        setQuat: function(q){
+            this.x = q.x; this.y = q.y; this.z = q.z; this.w = q.w;
+            return this;
+        },
 
         reset: function(){
             return this.set(0, 0, 0, 1);
@@ -169,6 +173,10 @@ define([
 
         dup: function(){
             return new Quat(this.x, this.y, this.z, this.w);
+        },
+
+        toArray: function(){
+            return [ this.x, this.y, this.z, this.w ];
         }
 
     };
