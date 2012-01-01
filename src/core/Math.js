@@ -18,9 +18,15 @@ define([
     math.rand = function(max){
         return Math.random() * max;
     };
+    math.randInt = function(max){
+        return Math.floor(Math.random() * max);
+    };
 
     math.rand2 = function(min, max){
         return min + Math.random() * (max - min);
+    };
+    math.randInt2 = function(min, max){
+        return Math.floor(min + Math.random() * (max - min));
     };
 
     math.randSym = function(max){
