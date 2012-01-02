@@ -14,7 +14,7 @@ define([
 
     Quat.identity = function(){
         return new Quat(0, 0, 0, 1);
-    }
+    };
 
     Quat.prototype = {
 
@@ -75,17 +75,17 @@ define([
             var len = this.length();
 
             if(len > 0){
-                this.x /= len
-                this.y /= len
-                this.z /= len
-                this.w /= len
+                this.x /= len;
+                this.y /= len;
+                this.z /= len;
+                this.w /= len;
             }
 
             return this;
         },
 
         rotate: function(theta, x, y, z){
-            var len = Math.sqrt(x*x + y*y + z*z)
+            var len = Math.sqrt(x*x + y*y + z*z);
 
             if(len > 0){
                 var t2  = theta / 2
