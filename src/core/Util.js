@@ -17,7 +17,7 @@ define(function(){
                 }
             }
             throw msg + " (" + errs.map(function(err){
-                return gl_enums[err]
+                return gl_enums[err];
             }).join(", ") + ")";
         }
     }

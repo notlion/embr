@@ -28,7 +28,7 @@ define([
         dispose: function(){
             var gl = this.gl;
             for(var i = attributes.length; --i >= 0;)
-                gl.deleteBuffer(attributes[i])
+                gl.deleteBuffer(attributes[i]);
         },
 
         update: function(attributes){
@@ -111,7 +111,7 @@ define([
             position: { data: positions, size: 3 },
             texcoord: { data: texcoords, size: 2 }
         });
-    }
+    };
 
 
     // Box
@@ -151,7 +151,7 @@ define([
             texcoord: { data: texcoords, size: 2 },
             index:    { data: indices }
         });
-    }
+    };
 
     return Vbo;
 
