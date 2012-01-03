@@ -17,8 +17,8 @@ em.require([
 
             this.projection = new core.Mat4().perspective(60, this.width / this.height, 0.01, 8);
             this.camera_mv  = new core.Mat4().lookAt(0, 0,-4,  // Eye Position
-                                                   0, 0, 0,  // Target Position
-                                                   0, 1, 0); // Up Vector
+                                                     0, 0, 0,  // Target Position
+                                                     0, 1, 0); // Up Vector
 
             var arcball = this.arcball = new Arcball(
                 new core.Vec2(this.width, this.height).scale(0.5),

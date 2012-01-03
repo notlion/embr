@@ -57,7 +57,7 @@ em.require([
             gl.clear(gl.DEPTH_BUFFER_BIT);
 
             this.material_color.use({
-                modelview: this.modelview.dup().scale(0.5, 0.5, 0.5));
+                modelview: this.modelview.dup().scale(0.5, 0.5, 0.5),
                 projection: this.projection
             });
             this.cube.draw(this.material_color);

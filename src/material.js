@@ -1,19 +1,15 @@
-(function(){
+define([
 
-    var names = [
-        "Material",
-        "ColorMaterial",
-        "NormalMaterial",
-        "LambertMaterial"
-    ];
+    "embr/material/Material",
+    "embr/material/ColorMaterial",
+    "embr/material/NormalMaterial",
+    "embr/material/LambertMaterial"
 
-    define(names.map(function(name){
-        return "embr/material/" + name;
-    }), function(){
-        var module = {};
-        for(var i = names.length; --i >= 0;)
-            module[names[i]] = arguments[i];
-        return module;
-    });
-
-})();
+], function(Material, ColorMaterial, NormalMaterial, LambertMaterial){
+    return {
+        Material:        Material,
+        ColorMaterial:   ColorMaterial,
+        NormalMaterial:  NormalMaterial,
+        LambertMaterial: LambertMaterial
+    };
+});
