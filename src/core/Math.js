@@ -11,9 +11,9 @@ define([
 
     var math = {};
 
-    var kPI2 = Math.kPI2 = Math.PI / 2;
-    var kPI4 = Math.kPI4 = Math.PI / 4;
-    var k2PI = Math.k2PI = Math.PI * 2;
+    var kPI2 = math.kPI2 = Math.PI / 2;
+    var kPI4 = math.kPI4 = Math.PI / 4;
+    var k2PI = math.k2PI = Math.PI * 2;
 
     math.rand = function(max){
         return Math.random() * max;
