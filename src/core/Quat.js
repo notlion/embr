@@ -2,9 +2,10 @@
 
 define([
 
-    "embr/core/Mat4"
+    "embr/core/Mat4",
+    "embr/core/Vec3"
 
-], function(Mat4){
+], function(Mat4, Vec3){
 
     "use strict";
 
@@ -69,6 +70,20 @@ define([
             this.w = w*aw - x*ax - y*ay - z*az;
 
             return this;
+        },
+
+        mulVec3: function(v){
+            var x = this.x, y = this.y, z = this.z, w = this.w;
+
+            var vm = 2 * (x * v.x + y * v.y + z * v.z);
+            var xm = 2 * w;
+            var pm = xm * w - 1;
+
+            return new Vec3(
+                pm * v.x + vm * x + xm * (y * v.z - z * v.y),
+                pm * v.y + vm * y + xm * (z * v.x - x * v.z),
+                pm * v.z + vm * z + xm * (x * v.y - y * v.x)
+            );
         },
 
         normalize: function(){
