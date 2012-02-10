@@ -26,13 +26,14 @@ define(function(){
 
     function Program(gl, src_vert, src_frag){
         this.gl = gl;
-        this.handle = gl.createProgram();
     }
 
     Program.prototype = {
 
         compile: function(src_vert, src_frag){
             var gl = this.gl, vs, fs;
+
+            this.handle = gl.createProgram();
 
             if(src_vert){
                 vs = gl.createShader(gl.VERTEX_SHADER);
