@@ -26,32 +26,32 @@ define(function(){
 
     function Program(gl, src_vert, src_frag){
         this.gl = gl;
-
         this.handle = gl.createProgram();
-        this.shader_vert = gl.createShader(gl.VERTEX_SHADER);
-        this.shader_frag = gl.createShader(gl.FRAGMENT_SHADER);
-
-        gl.attachShader(this.handle, this.shader_vert);
-        gl.attachShader(this.handle, this.shader_frag);
     }
 
     Program.prototype = {
 
         compile: function(src_vert, src_frag){
-            var gl = this.gl;
+            var gl = this.gl, vs, fs;
 
             if(src_vert){
-                gl.shaderSource(this.shader_vert, kVertexShaderPrefix + src_vert);
-                gl.compileShader(this.shader_vert);
-                if(gl.getShaderParameter(this.shader_vert, gl.COMPILE_STATUS) !== true)
-                    throw gl.getShaderInfoLog(this.shader_vert);
+                vs = gl.createShader(gl.VERTEX_SHADER);
+                gl.shaderSource(vs, kVertexShaderPrefix + src_vert);
+                gl.compileShader(vs);
+                if(gl.getShaderParameter(vs, gl.COMPILE_STATUS) !== true)
+                    throw gl.getShaderInfoLog(vs);
+                gl.attachShader(this.handle, vs);
+                gl.deleteShader(vs);
             }
 
             if(src_frag){
-                gl.shaderSource(this.shader_frag, kFragmentShaderPrefix + src_frag);
-                gl.compileShader(this.shader_frag);
-                if(gl.getShaderParameter(this.shader_frag, gl.COMPILE_STATUS) !== true)
-                    throw gl.getShaderInfoLog(this.shader_frag);
+                fs = gl.createShader(gl.FRAGMENT_SHADER);
+                gl.shaderSource(fs, kFragmentShaderPrefix + src_frag);
+                gl.compileShader(fs);
+                if(gl.getShaderParameter(fs, gl.COMPILE_STATUS) !== true)
+                    throw gl.getShaderInfoLog(fs);
+                gl.attachShader(this.handle, fs);
+                gl.deleteShader(fs);
             }
         },
 
