@@ -47,6 +47,8 @@ define(function(){
 
         setData: function(width, height, data, fmt){
             var gl = this.gl;
+            this.width = width;
+            this.height = height;
             this.updateFormat(fmt);
             gl.texImage2D(this.target, 0, this.formati, width, height, 0, this.format, this.type, data);
         },
