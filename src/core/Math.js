@@ -45,6 +45,10 @@ define([
         return (v < min) ? min : ((v > max) ? max : v);
     };
 
+    math.isPow2 = function(v){
+        return (v != 0) && ((v & (v - 1)) == 0);
+    };
+
     // Random point on a sphere
     math.randVec3 = function(radius){
         var phi      = Math.random() * k2PI;
