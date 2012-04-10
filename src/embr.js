@@ -6,7 +6,7 @@
   var Embr = context.Embr = {};
 
   var gl = null;
-  Embr.setContext = function(_gl){
+  Embr.setContext = function (_gl) {
     Embr.gl = gl = _gl;
   };
 
@@ -15,7 +15,7 @@
 
   var gl_enums = null;
 
-  Embr.checkError = function(gl, msg){
+  Embr.checkError = function (gl, msg) {
     var name, err, errs = [];
     while((err = gl.getError()) !== gl.NO_ERROR){
       errs.push(err);
@@ -34,7 +34,7 @@
     }
   };
 
-  Embr.wrapContextWithErrorChecks = function(gl){
+  Embr.wrapContextWithErrorChecks = function (gl) {
     var name, prop, wrapped = {};
     for(name in gl){
       prop = gl[name];
@@ -56,16 +56,16 @@
 
   //// PROGRAM ////
 
-  Embr.Program = function(vsrc, fsrc){
+  Embr.Program = function (vsrc, fsrc) {
     if(vsrc || fsrc)
       this.compile(vsrc, fsrc);
   };
   Embr.Program.prototype = {
 
-    compile: function(vsrc, fsrc){
+    compile: function (vsrc, fsrc) {
       var program = this.program = gl.createProgram();
 
-      function compileAndAttach(src, type){
+      function compileAndAttach (src, type) {
         var shader = gl.createShader(type);
         gl.shaderSource(shader, src);
         gl.compileShader(shader);
@@ -92,7 +92,7 @@
       if(gl.getProgramParameter(program, gl.LINK_STATUS) !== true)
         throw gl.getProgramInfoLog(program);
 
-      function makeUniformSetter(type, location){
+      function makeUniformSetter (type, location) {
         switch(type){
           case gl.BOOL:
           case gl.INT:
@@ -154,7 +154,7 @@
       return this;
     },
 
-    use: function(uniforms) {
+    use: function (uniforms) {
       gl.useProgram(this.program);
       if(uniforms){
         for(var name in uniforms){
@@ -173,7 +173,7 @@
 
   //// VBO ////
 
-  Embr.Vbo = function(type, usage){
+  Embr.Vbo = function (type, usage) {
     this.type = type;
     this.usage = usage || gl.STATIC_DRAW;
     this.program = null;
@@ -182,7 +182,7 @@
   }
   Embr.Vbo.prototype = {
 
-    setAttr: function(name, params){
+    setAttr: function (name, params) {
       // Create buffer if none exists
       if(!(name in this.attributes)){
         this.attributes[name] = {
@@ -211,14 +211,14 @@
       return this;
     },
 
-    setIndices: function(indices){
+    setIndices: function (params) {
       // Create buffer if none exists
       if(!this.indices)
         this.indices = { buffer: gl.createBuffer() };
 
       var data = params.data;
       if(data){
-        indices.length = data.length;
+        this.indices.length = data.length;
 
         // Ensure data is a typed array
         if(!(data instanceof Float16Array))
@@ -232,7 +232,7 @@
       return this;
     },
 
-    setProg: function(program){
+    setProg: function (program) {
       this.program = program;
       for(var name in this.attributes){
         this.attributes[name].location =
