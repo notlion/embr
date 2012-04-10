@@ -11,11 +11,54 @@
   };
 
 
+  //// UTILITY ////
+
+  var gl_enums = null;
+
+  Embr.checkError = function(gl, msg){
+    var name, err, errs = [];
+    while((err = gl.getError()) !== gl.NO_ERROR){
+      errs.push(err);
+    }
+    if(errs.length > 0){
+      if(gl_enums === null){
+        gl_enums = {};
+        for(name in gl){
+          if(typeof gl[name] == "number")
+            gl_enums[gl[name]] = name;
+        }
+      }
+      throw msg + ": " + errs.map(function(err){
+        return gl_enums[err];
+      }).join(", ");
+    }
+  };
+
+  Embr.wrapContextWithErrorChecks = function(gl){
+    var name, prop, wrapped = {};
+    for(name in gl){
+      prop = gl[name];
+      if(typeof(prop) === "function"){
+        wrapped[name] = (function(name, fn){
+          return function(){
+            var res = fn.apply(gl, arguments);
+            Embr.checkError(gl, "GL Error in " + name);
+            return res;
+          };
+        })(name, prop);
+      }
+      else
+        wrapped[name] = prop;
+    }
+    return wrapped;
+  };
+
+
   //// PROGRAM ////
 
   Embr.Program = function(vsrc, fsrc){
     if(vsrc || fsrc)
-      compile(vsrc, fsrc);
+      this.compile(vsrc, fsrc);
   };
   Embr.Program.prototype = {
 
@@ -38,6 +81,8 @@
         compileAndAttach(vsrc, gl.VERTEX_SHADER);
       if(fsrc)
         compileAndAttach(fsrc, gl.FRAGMENT_SHADER);
+
+      return this;
     },
 
     link: function(){
@@ -110,7 +155,7 @@
     },
 
     use: function(uniforms) {
-      Embr.gl.useProgram(this.program);
+      gl.useProgram(this.program);
       if(uniforms){
         for(var name in uniforms){
           if(name in this.uniforms)
@@ -120,7 +165,7 @@
     },
 
     cleanup: function(){
-      Embr.gl.deleteProgram(this.program);
+      gl.deleteProgram(this.program);
     }
 
   };
@@ -128,26 +173,29 @@
 
   //// VBO ////
 
-  function Vbo(type, usage){
+  Embr.Vbo = function(type, usage){
     this.type = type;
-    this.usage = usage;
+    this.usage = usage || gl.STATIC_DRAW;
     this.program = null;
     this.indices = null;
     this.attributes = {};
   }
-  Vbo.prototype = {
+  Embr.Vbo.prototype = {
 
     setAttr: function(name, params){
       // Create buffer if none exists
-      if(!(name in this.attributes))
-        this.attributes[name] = { buffer: gl.createBuffer() };
+      if(!(name in this.attributes)){
+        this.attributes[name] = {
+          buffer: gl.createBuffer(),
+          location: null
+        };
+      }
 
       var attr = this.attributes[name];
 
       attr.size = params["size"] || attr.size || 1;
-      attr.location = params["location"] || attr.location || -1;
 
-      var data = params.data;
+      var data = params["data"];
       if(data){
         attr.length = Math.floor(data.length / attr.size);
 
@@ -184,24 +232,26 @@
       return this;
     },
 
-    setProgram: function(program){
+    setProg: function(program){
+      this.program = program;
       for(var name in this.attributes){
-        if(name in program.locations)
-          this.attributes[name].location = this.locations[name];
+        this.attributes[name].location =
+          (name in program.locations) ? program.locations[name] : -1;
       }
+      return this;
     },
 
     draw: function(){
-      var gl = Embr.gl
-        , indices = this.indices
-        , program = this.program;
+      var indices = this.indices
+        , length = Number.MAX_VALUE;
 
       for(var name in this.attributes){
         var attr = this.attributes[name];
-        if(attr.location >= 0){
+        if(attr.location !== null && attr.length){
           gl.bindBuffer(gl.ARRAY_BUFFER, attr.buffer);
           gl.vertexAttribPointer(attr.location, attr.size, gl.FLOAT, false, 0, 0);
           gl.enableVertexAttribArray(attr.location);
+          length = Math.min(length, attr.length);
         }
       }
 
@@ -209,14 +259,13 @@
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indices.buffer);
         gl.drawElements(this.type, indices.length, gl.UNSIGNED_SHORT, 0);
       }
-      else{
-        gl.drawArrays(this.type, 0, this.length);
-      }
+      else
+        gl.drawArrays(this.type, 0, length);
     },
 
     cleanup: function(){
       for(var name in this.attributes)
-        Embr.gl.deleteBuffer(this.attributes[name].buffer);
+        gl.deleteBuffer(this.attributes[name].buffer);
     }
 
   };
