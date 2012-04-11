@@ -1,0 +1,130 @@
+<!DOCTYPE HTML>
+<html lang="en">
+
+<head>
+<title>embr - vbo test</title>
+<meta charset="utf-8">
+<style type="text/css">
+
+body {
+  margin: 0; padding: 0;
+}
+#glcanvas {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+}
+
+</style>
+<script type="text/javascript" src="../src/embr.js"></script>
+<script type="text/javascript" src="../lib/omgobj.js"></script>
+<script type="text/javascript" src="https://raw.github.com/toji/gl-matrix/master/gl-matrix.js"></script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.js"></script>
+</head>
+
+<body onload="init()">
+<script type="text/javascript">
+
+var vsh = [
+  "uniform mat4 u_mvp;",
+  "attribute vec3 position;",
+  "attribute vec3 normal;",
+  "varying vec3 v_normal;",
+  "void main(){",
+    "v_normal = normal;",
+    "gl_Position = u_mvp * vec4(position, 1.);",
+  "}"
+].join("\n");
+
+var fsh = [
+  "#ifdef GL_ES",
+    "precision highp float;",
+  "#endif",
+  "uniform vec3 u_ambient;",
+  "uniform vec3 u_light_dir, u_light_color;",
+  "varying vec3 v_normal;",
+  "void main(){",
+    "float lambert = max(0., dot(normalize(v_normal), u_light_dir));",
+    "gl_FragColor = vec4(u_ambient + u_light_color * lambert, 1.);",
+  "}"
+].join("\n");
+
+function init(){
+  var canvas = document.getElementById("glcanvas");
+  var gl = canvas.getContext("experimental-webgl");
+
+  gl.enable(gl.DEPTH_TEST);
+
+  var aspect;
+
+  // Do this first
+  Embr.setContext(Embr.wrapContextWithErrorChecks(gl));
+
+  var prog = new Embr.Program(vsh, fsh).link();
+
+  var obj = null;
+  $.ajax({
+    url: "test.obj",
+    dataType: "text",
+    success: function(res){
+      var data = omgobj.parseTriangles(res, {
+        normals: true, uvs: false
+      });
+      console.log(data);
+      obj = new Embr.Vbo(gl.TRIANGLES)
+        .setAttr("position", {
+          size: 3,
+          stride: data.stride,
+          data: data.geom
+        })
+        .setAttr("normal", {
+          size: 3,
+          stride: data.stride,
+          offset: data.stride / 2,
+          data: data.geom
+        })
+        .setProg(prog);
+      console.log(obj);
+    }
+  });
+
+  function draw(){
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
+
+    if(obj){
+      var mvp = mat4.perspective(60, aspect, 0.01, 16);
+      mat4.multiply(mvp, mat4.lookAt([0, 0, 8], [0, 0, 0], [0, 1, 0]));
+      mat4.rotateY(mvp, Date.now() / 1000);
+
+      prog.use({
+        u_mvp: mvp,
+        u_ambient: [0.1, 0.1, 0.1],
+        u_light_dir: vec3.normalize([0, 1, -1]),
+        u_light_color: [1, 1, 1]
+      });
+
+      obj.draw();
+    }
+  }
+
+  function resize(){
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+    aspect = canvas.width / canvas.height;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  setInterval(draw, 1000 / 30);
+}
+
+</script>
+<canvas id="glcanvas">
+Your browser doesn't appear to support the HTML5 <code>&lt;canvas&gt;</code> element.
+</canvas>
+</body>
+</html>

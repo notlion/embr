@@ -173,6 +173,14 @@
 
   //// VBO ////
 
+  function setWithOpts(opts, dest, defaults){
+    for(var name in defaults){
+      dest[name] = opts[name] !== undefined ? opts[name]
+                 : dest[name] !== undefined ? dest[name]
+                 : defaults[name];
+    }
+  }
+
   Embr.Vbo = function (type, usage) {
     this.type = type;
     this.usage = usage || gl.STATIC_DRAW;
@@ -182,7 +190,7 @@
   }
   Embr.Vbo.prototype = {
 
-    setAttr: function (name, params) {
+    setAttr: function (name, opts) {
       // Create buffer if none exists
       if(!(name in this.attributes)){
         this.attributes[name] = {
@@ -193,15 +201,22 @@
 
       var attr = this.attributes[name];
 
-      attr.size = params["size"] || attr.size || 1;
+      setWithOpts(opts, attr, {
+        "size": 1,
+        "stride": 0,
+        "offset": 0
+      });
 
-      var data = params["data"];
+      var data = opts["data"];
       if(data){
-        attr.length = Math.floor(data.length / attr.size);
-
         // Ensure data is a typed array
         if(!(data instanceof Float32Array))
           data = new Float32Array(data);
+
+        attr.length = Math.floor(
+          attr.stride > 0 ? data.byteLength / attr.stride
+                          : data.length / attr.size
+        );
 
         // Buffer data
         gl.bindBuffer(gl.ARRAY_BUFFER, attr.buffer);
@@ -211,12 +226,12 @@
       return this;
     },
 
-    setIndices: function (params) {
+    setIndices: function (opts) {
       // Create buffer if none exists
       if(!this.indices)
         this.indices = { buffer: gl.createBuffer() };
 
-      var data = params.data;
+      var data = opts["data"];
       if(data){
         this.indices.length = data.length;
 
@@ -243,14 +258,18 @@
 
     draw: function(){
       var indices = this.indices
-        , length = Number.MAX_VALUE;
+        , length = Number.MAX_VALUE
+        , enabled_locations = [];
 
       for(var name in this.attributes){
         var attr = this.attributes[name];
-        if(attr.location !== null && attr.length){
+        if(attr.location !== null && attr.length > 0){
           gl.bindBuffer(gl.ARRAY_BUFFER, attr.buffer);
-          gl.vertexAttribPointer(attr.location, attr.size, gl.FLOAT, false, 0, 0);
+          gl.vertexAttribPointer(
+            attr.location, attr.size, gl.FLOAT, false, attr.stride, attr.offset
+          );
           gl.enableVertexAttribArray(attr.location);
+          enabled_locations.push(attr);
           length = Math.min(length, attr.length);
         }
       }
@@ -261,6 +280,9 @@
       }
       else
         gl.drawArrays(this.type, 0, length);
+
+      for(var i = enabled_locations.length; --i >= 0;)
+        gl.disableVertexAttribArray(enabled_locations[i]);
     },
 
     cleanup: function(){
