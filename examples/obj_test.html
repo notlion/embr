@@ -118,10 +118,10 @@ function init(){
       u_mvp_mtx: mat4.multiply(projection, modelview, mat4.create()),
       u_norm_mtx: mat3.transpose(mat4.toInverseMat3(modelview)),
       u_ambient: [0.1, 0.1, 0.1],
-      "u_light_dir[0]": lights.reduce(function(a, b){
+      u_light_dir: lights.reduce(function(a, b){
         return a.dir.concat(b.dir);
       }),
-      "u_light_color[0]": lights.reduce(function(a, b){
+      u_light_color: lights.reduce(function(a, b){
         return a.color.concat(b.color);
       })
     });

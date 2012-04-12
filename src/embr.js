@@ -134,14 +134,19 @@
       this.uniforms = {};
       this.locations = {};
 
-      var i, n, info, location;
+      var i, n, name, info, location;
 
       n = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
       for(i = 0; i < n; ++i){
         info = gl.getActiveUniform(program, i);
         location = gl.getUniformLocation(program, info.name);
-        this.uniforms[info.name] = makeUniformSetter(info.type, location);
-        this.locations[info.name] = location;
+
+        // GLSL uniform arrays come with [0] appended. Since multiple variables
+        // with the same name are not allowed we should be able to ignore this.
+        name = info.name.replace("[0]", "");
+
+        this.uniforms[name] = makeUniformSetter(info.type, location);
+        this.locations[name] = location;
       }
 
       n = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
@@ -261,6 +266,7 @@
         , length = Number.MAX_VALUE
         , enabled_locations = [];
 
+      // Bind any attributes that are used in our shader.
       for(var name in this.attributes){
         var attr = this.attributes[name];
         if(attr.location !== null && attr.length > 0){
@@ -281,6 +287,7 @@
       else
         gl.drawArrays(this.type, 0, length);
 
+      // Clean up GL state.
       for(var i = enabled_locations.length; --i >= 0;)
         gl.disableVertexAttribArray(enabled_locations[i]);
     },
