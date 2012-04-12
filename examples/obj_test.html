@@ -27,35 +27,6 @@ body {
 <body onload="init()">
 <script type="text/javascript">
 
-var vsh = [
-  "uniform mat4 u_mvp_mtx;",
-  "uniform mat3 u_norm_mtx;",
-  "attribute vec3 position;",
-  "attribute vec3 normal;",
-  "varying vec3 v_normal;",
-  "void main(){",
-    "v_normal = u_norm_mtx * normal;",
-    "gl_Position = u_mvp_mtx * vec4(position, 1.);",
-  "}"
-].join("\n");
-
-var fsh = [
-  "#ifdef GL_ES",
-    "precision highp float;",
-  "#endif",
-  "uniform vec3 u_ambient;",
-  "uniform vec3 u_light_dir[2], u_light_color[2];",
-  "varying vec3 v_normal;",
-  "void main(){",
-    "vec3 color = u_ambient;",
-    "for(int i = 0; i < 2; ++i){",
-      "float lambert = max(0., dot(normalize(v_normal), -u_light_dir[i]));",
-      "color += u_light_color[i] * lambert;",
-    "}",
-    "gl_FragColor = vec4(color, 1.);",
-  "}"
-].join("\n");
-
 function init(){
   var canvas = document.getElementById("glcanvas");
   var gl = canvas.getContext("experimental-webgl");
@@ -67,18 +38,17 @@ function init(){
   // Do this first
   Embr.setContext(Embr.wrapContextWithErrorChecks(gl));
 
-  var prog = new Embr.Program(vsh, fsh).link();
-  console.log(prog);
+  var vs_src = $("#prog-vs").text();
+  var fs_src = $("#prog-fs").text();
+  var prog = new Embr.Program(vs_src, fs_src).link();
 
-  var obj = new Embr.Vbo(gl.TRIANGLES);
-  $.ajax({
-    url: "test.obj",
-    dataType: "text",
-    success: function(res){
-      var data = omgobj.parseTriangles(res, {
-        normals: true, uvs: false
-      });
-      obj.setAttr("position", {
+  var objs = [];
+  function onObjLoaded(res){
+    var data = omgobj.parseTriangles(res, {
+      normals: true, uvs: false
+    });
+    var obj = new Embr.Vbo(gl.TRIANGLES)
+      .setAttr("position", {
         size: 3,
         stride: data.stride,
         data: data.geom
@@ -90,7 +60,15 @@ function init(){
         data: data.geom
       })
       .setProg(prog);
-    }
+    objs.push(obj);
+  }
+
+  [
+    "test.obj",
+    "octahedron.obj"
+  ]
+  .forEach(function(url){
+    $.ajax({ url: url, dataType: "text", success: onObjLoaded });
   });
 
   var lights = [{ color: [0.9, 0.9, 0.8], dir: [0, 0, -1] },
@@ -104,7 +82,7 @@ function init(){
 
     var projection = mat4.perspective(60, aspect, 0.01, 16);
     var modelview = mat4.lookAt([0, 0, 8], [0, 0, 0], [0, 1, 0]);
-    mat4.rotateY(modelview, time);
+    // mat4.rotateY(modelview, time);
 
     var speed = 0.05;
     var rotation = mat4.rotateY(mat4.rotateX(mat4.identity(),
@@ -115,8 +93,6 @@ function init(){
     });
 
     prog.use({
-      u_mvp_mtx: mat4.multiply(projection, modelview, mat4.create()),
-      u_norm_mtx: mat3.transpose(mat4.toInverseMat3(modelview)),
       u_ambient: [0.1, 0.1, 0.1],
       u_light_dir: lights.reduce(function(a, b){
         return a.dir.concat(b.dir);
@@ -126,7 +102,15 @@ function init(){
       })
     });
 
-    obj.draw();
+    // Draw objects.
+    objs.forEach(function(obj, i){
+      var mv = mat4.create(modelview);
+      mat4.translate(mv, [i / (objs.length - 1) * 6 - 3, 0, 0]);
+      mat4.rotateY(mv, time);
+      prog.uniforms.u_mvp_mtx(mat4.multiply(projection, mv, mat4.create()));
+      prog.uniforms.u_norm_mtx(mat3.transpose(mat4.toInverseMat3(modelview)));
+      obj.draw();
+    });
   }
 
   function resize(){
@@ -139,6 +123,43 @@ function init(){
   resize();
 
   setInterval(draw, 1000 / 30);
+}
+
+</script>
+<script id="prog-vs" type="x-shader/x-vertex">
+
+uniform mat4 u_mvp_mtx;
+uniform mat3 u_norm_mtx;
+
+attribute vec3 position;
+attribute vec3 normal;
+
+varying vec3 v_normal;
+
+void main(){
+  v_normal = u_norm_mtx * normal;
+  gl_Position = u_mvp_mtx * vec4(position, 1.);
+}
+
+</script>
+<script id="prog-fs" type="x-shader/x-fragment">
+
+#ifdef GL_ES
+  precision highp float;
+#endif
+
+uniform vec3 u_ambient;
+uniform vec3 u_light_dir[2], u_light_color[2];
+
+varying vec3 v_normal;
+
+void main(){
+  vec3 color = u_ambient;
+  for(int i = 0; i < 2; ++i){
+    float lambert = max(0., dot(normalize(v_normal), -u_light_dir[i]));
+    color += u_light_color[i] * lambert;
+  }
+  gl_FragColor = vec4(color, 1.);
 }
 
 </script>
