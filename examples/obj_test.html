@@ -64,7 +64,7 @@ function init(){
   }
 
   [
-    "test.obj",
+    "cross.obj",
     "octahedron.obj"
   ]
   .forEach(function(url){
@@ -82,7 +82,6 @@ function init(){
 
     var projection = mat4.perspective(60, aspect, 0.01, 16);
     var modelview = mat4.lookAt([0, 0, 8], [0, 0, 0], [0, 1, 0]);
-    // mat4.rotateY(modelview, time);
 
     var speed = 0.05;
     var rotation = mat4.rotateY(mat4.rotateX(mat4.identity(),
@@ -106,9 +105,12 @@ function init(){
     objs.forEach(function(obj, i){
       var mv = mat4.create(modelview);
       mat4.translate(mv, [i / (objs.length - 1) * 6 - 3, 0, 0]);
+      mat4.rotateX(mv, time * 0.2);
       mat4.rotateY(mv, time);
+
       prog.uniforms.u_mvp_mtx(mat4.multiply(projection, mv, mat4.create()));
-      prog.uniforms.u_norm_mtx(mat3.transpose(mat4.toInverseMat3(modelview)));
+      prog.uniforms.u_norm_mtx(mat3.transpose(mat4.toInverseMat3(mv)));
+
       obj.draw();
     });
   }
