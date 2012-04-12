@@ -27,6 +27,11 @@ body {
 <body onload="init()">
 <script type="text/javascript">
 
+var obj_urls = [
+  "cross.obj",
+  "octahedron.obj"
+];
+
 function init(){
   var canvas = document.getElementById("glcanvas");
   var gl = canvas.getContext("experimental-webgl");
@@ -42,8 +47,7 @@ function init(){
   var fs_src = $("#prog-fs").text();
   var prog = new Embr.Program(vs_src, fs_src).link();
 
-  var objs = [];
-  function onObjLoaded(res){
+  function onObjLoaded (res) {
     var data = omgobj.parseTriangles(res, {
       normals: true, uvs: false
     });
@@ -63,11 +67,9 @@ function init(){
     objs.push(obj);
   }
 
-  [
-    "cross.obj",
-    "octahedron.obj"
-  ]
-  .forEach(function(url){
+  var objs = [];
+
+  obj_urls.forEach(function(url){
     $.ajax({ url: url, dataType: "text", success: onObjLoaded });
   });
 
@@ -84,11 +86,12 @@ function init(){
     var modelview = mat4.lookAt([0, 0, 8], [0, 0, 0], [0, 1, 0]);
 
     var speed = 0.05;
-    var rotation = mat4.rotateY(mat4.rotateX(mat4.identity(),
-                                             Math.sin(time) * speed),
-                                             Math.sin(time * 0.75) * speed);
+    var light_mtx = mat4.identity();
+    mat4.rotateY(light_mtx, Math.sin(time * 0.75) * speed);
+    mat4.rotateX(light_mtx, Math.sin(time) * speed);
+
     lights.forEach(function(light){
-      vec3.normalize(mat4.multiplyVec3(rotation, light.dir));
+      vec3.normalize(mat4.multiplyVec3(light_mtx, light.dir));
     });
 
     prog.use({
