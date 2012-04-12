@@ -28,13 +28,14 @@ body {
 <script type="text/javascript">
 
 var vsh = [
-  "uniform mat4 u_mvp;",
+  "uniform mat4 u_mvp_mtx;",
+  "uniform mat3 u_norm_mtx;",
   "attribute vec3 position;",
   "attribute vec3 normal;",
   "varying vec3 v_normal;",
   "void main(){",
-    "v_normal = normal;",
-    "gl_Position = u_mvp * vec4(position, 1.);",
+    "v_normal = u_norm_mtx * normal;",
+    "gl_Position = u_mvp_mtx * vec4(position, 1.);",
   "}"
 ].join("\n");
 
@@ -64,7 +65,7 @@ function init(){
 
   var prog = new Embr.Program(vsh, fsh).link();
 
-  var obj = null;
+  var obj = new Embr.Vbo(gl.TRIANGLES);
   $.ajax({
     url: "test.obj",
     dataType: "text",
@@ -72,21 +73,18 @@ function init(){
       var data = omgobj.parseTriangles(res, {
         normals: true, uvs: false
       });
-      console.log(data);
-      obj = new Embr.Vbo(gl.TRIANGLES)
-        .setAttr("position", {
-          size: 3,
-          stride: data.stride,
-          data: data.geom
-        })
-        .setAttr("normal", {
-          size: 3,
-          stride: data.stride,
-          offset: data.stride / 2,
-          data: data.geom
-        })
-        .setProg(prog);
-      console.log(obj);
+      obj.setAttr("position", {
+        size: 3,
+        stride: data.stride,
+        data: data.geom
+      })
+      .setAttr("normal", {
+        size: 3,
+        stride: data.stride,
+        offset: data.stride / 2,
+        data: data.geom
+      })
+      .setProg(prog);
     }
   });
 
@@ -94,20 +92,19 @@ function init(){
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
 
-    if(obj){
-      var mvp = mat4.perspective(60, aspect, 0.01, 16);
-      mat4.multiply(mvp, mat4.lookAt([0, 0, 8], [0, 0, 0], [0, 1, 0]));
-      mat4.rotateY(mvp, Date.now() / 1000);
+    var projection = mat4.perspective(60, aspect, 0.01, 16);
+    var modelview = mat4.lookAt([0, 0, 8], [0, 0, 0], [0, 1, 0]);
+    mat4.rotateY(modelview, Date.now() / 1000);
 
-      prog.use({
-        u_mvp: mvp,
-        u_ambient: [0.1, 0.1, 0.1],
-        u_light_dir: vec3.normalize([0, 1, -1]),
-        u_light_color: [1, 1, 1]
-      });
+    prog.use({
+      u_mvp_mtx: mat4.multiply(projection, modelview, mat4.create()),
+      u_norm_mtx: mat3.transpose(mat4.toInverseMat3(modelview)),
+      u_ambient: [0.1, 0.1, 0.1],
+      u_light_dir: vec3.normalize([1, 1, 1]),
+      u_light_color: [1, 1, 1]
+    });
 
-      obj.draw();
-    }
+    obj.draw();
   }
 
   function resize(){
