@@ -256,7 +256,7 @@
       this.program = program;
       for(var name in this.attributes){
         this.attributes[name].location =
-          (name in program.locations) ? program.locations[name] : -1;
+          (name in program.locations) ? program.locations[name] : null;
       }
       return this;
     },
