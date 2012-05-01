@@ -326,9 +326,16 @@
         "height": 0
       });
 
+      var self = this;
+      function bind() {
+        if(!self.texture)
+          self.texture = gl.createTexture();
+        self.bind();
+      }
+
       if(opts.data) {
         if(prw !== params.width || prh !== this.height) {
-          this.bind(undefined, true);
+          bind();
           gl.texImage2D(this.target, 0, params.format_internal,
                                         params.width,
                                         params.height,
@@ -338,7 +345,7 @@
                                         opts.data);
         }
         else if(prw && prh) {
-          this.bind(undefined, true);
+          bind();
           gl.texSubImage2D(this.target, 0, 0, 0, params.width,
                                                  params.height,
                                                  params.format,
@@ -347,7 +354,7 @@
         }
       }
       else if(opts.element) {
-        this.bind(undefined, true);
+        bind();
         // gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
         gl.texImage2D(this.target, 0, params.format_internal,
                                       params.format,
@@ -365,11 +372,9 @@
       return this;
     },
 
-    bind: function (unit, force) {
+    bind: function (unit) {
       if(unit !== undefined)
         this.params.unit = unit;
-      if(force && !this.texture)
-        this.texture = gl.createTexture();
       if(this.texture) {
         gl.activeTexture(gl.TEXTURE0 + this.params.unit);
         gl.bindTexture(this.target, this.texture);
