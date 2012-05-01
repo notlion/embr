@@ -178,7 +178,7 @@
 
   //// VBO ////
 
-  function setWithOpts(opts, dest, defaults){
+  function setWithOpts (opts, dest, defaults) {
     for(var name in defaults){
       dest[name] = opts[name] !== undefined ? opts[name]
                  : dest[name] !== undefined ? dest[name]
@@ -295,6 +295,96 @@
     cleanup: function(){
       for(var name in this.attributes)
         gl.deleteBuffer(this.attributes[name].buffer);
+    }
+
+  };
+
+
+  //// TEXTURE ////
+
+  Embr.Texture = function (target) {
+    this.texture = null;
+    this.target = target || gl.TEXTURE_2D;
+    this.params = {};
+  };
+  Embr.Texture.prototype = {
+
+    set: function (opts) {
+      var params = this.params
+        , prw = params.width, prh = params.height;
+
+      setWithOpts(opts, params, {
+        "unit": 0,
+        "format": gl.RGBA,
+        "format_internal": gl.RGBA,
+        "type": gl.UNSIGNED_BYTE,
+        "filter_min": gl.NEAREST,
+        "filter_mag": gl.NEAREST,
+        "wrap_s": gl.CLAMP_TO_EDGE,
+        "wrap_t": gl.CLAMP_TO_EDGE,
+        "width": 0,
+        "height": 0
+      });
+
+      if(opts.data) {
+        if(prw !== params.width || prh !== this.height) {
+          this.bind(undefined, true);
+          gl.texImage2D(this.target, 0, params.format_internal,
+                                        params.width,
+                                        params.height,
+                                        0,
+                                        params.format,
+                                        params.type,
+                                        opts.data);
+        }
+        else if(prw && prh) {
+          this.bind(undefined, true);
+          gl.texSubImage2D(this.target, 0, 0, 0, params.width,
+                                                 params.height,
+                                                 params.format,
+                                                 params.type,
+                                                 opts.data);
+        }
+      }
+      else if(opts.element) {
+        this.bind(undefined, true);
+        // gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+        gl.texImage2D(this.target, 0, params.format_internal,
+                                      params.format,
+                                      params.type,
+                                      opts.element);
+      }
+
+      if(this.texture) {
+        gl.texParameteri(this.target, gl.TEXTURE_MIN_FILTER, params.filter_min);
+        gl.texParameteri(this.target, gl.TEXTURE_MAG_FILTER, params.filter_mag);
+        gl.texParameteri(this.target, gl.TEXTURE_WRAP_S, params.wrap_s);
+        gl.texParameteri(this.target, gl.TEXTURE_WRAP_T, params.wrap_t);
+      }
+
+      return this;
+    },
+
+    bind: function (unit, force) {
+      if(unit !== undefined)
+        this.params.unit = unit;
+      if(force && !this.texture)
+        this.texture = gl.createTexture();
+      if(this.texture) {
+        gl.activeTexture(gl.TEXTURE0 + this.params.unit);
+        gl.bindTexture(this.target, this.texture);
+      }
+    },
+
+    unbind: function () {
+      if(this.texture) {
+        gl.activeTexture(gl.TEXTURE0 + this.params.unit);
+        gl.bindTexture(this.target, null);
+      }
+    },
+
+    cleanup: function () {
+      gl.deleteTexture(this.texture);
     }
 
   };
