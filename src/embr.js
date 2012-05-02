@@ -241,8 +241,8 @@
         this.indices.length = data.length;
 
         // Ensure data is a typed array
-        if(!(data instanceof Float16Array))
-          data = new Float16Array(data);
+        if(!(data instanceof Uint16Array))
+          data = new Uint16Array(data);
 
         // Buffer data
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indices.buffer);
