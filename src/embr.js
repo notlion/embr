@@ -3,7 +3,7 @@
   "use strict";
 
 
-  var Embr = context.Embr = {};
+  var Embr = {};
 
   var gl = null;
   Embr.setContext = function (_gl) {
@@ -393,5 +393,22 @@
     }
 
   };
+
+
+  // Export for Node.js
+  if(typeof exports !== "undefined" &&
+     typeof module !== "undefined" && module.exports) {
+    exports = module.exports = Embr;
+  }
+
+  // Export for AMD (RequireJS and similar)
+  else if(typeof define === "function" && define.amd) {
+    define(function() { return Embr; });
+  }
+
+  // Just append to the current context
+  else {
+    context.Embr = Embr;
+  }
 
 })(this);
