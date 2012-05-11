@@ -11,36 +11,40 @@
   };
 
 
-  //// UTILITY ////
+  // ### Utility
 
   var gl_enums = null;
 
   Embr.checkError = function (gl, msg) {
     var name, err, errs = [];
-    while((err = gl.getError()) !== gl.NO_ERROR){
+    // Check for any GL errors.
+    while((err = gl.getError()) !== gl.NO_ERROR) {
       errs.push(err);
     }
-    if(errs.length > 0){
-      if(gl_enums === null){
+    if(errs.length > 0) {
+      // Build GL enums lookup dictionary if necessary.
+      if(!gl_enums) {
         gl_enums = {};
-        for(name in gl){
+        for(name in gl) {
           if(typeof gl[name] == "number")
             gl_enums[gl[name]] = name;
         }
       }
-      throw msg + ": " + errs.map(function(err){
+      // Throw all GL errors.
+      throw msg + ": " + errs.map(function (err) {
         return gl_enums[err];
       }).join(", ");
     }
   };
 
+  // Create a GL context which checks for errors after every call.
   Embr.wrapContextWithErrorChecks = function (gl) {
     var name, prop, wrapped = {};
-    for(name in gl){
+    for(name in gl) {
       prop = gl[name];
-      if(typeof(prop) === "function"){
-        wrapped[name] = (function(name, fn){
-          return function(){
+      if(typeof(prop) === "function") {
+        wrapped[name] = (function (name, fn) {
+          return function () {
             var res = fn.apply(gl, arguments);
             Embr.checkError(gl, "GL Error in " + name);
             return res;
@@ -54,7 +58,7 @@
   };
 
 
-  //// PROGRAM ////
+  // ### Program
 
   Embr.Program = function (vsrc, fsrc) {
     if(vsrc || fsrc)
@@ -85,7 +89,7 @@
       return this;
     },
 
-    link: function(){
+    link: function () {
       var program = this.program;
 
       gl.linkProgram(program);
@@ -98,35 +102,35 @@
           case gl.INT:
           case gl.SAMPLER_2D:
           case gl.SAMPLER_CUBE:
-            return function(value){
+            return function (value) {
               gl.uniform1i(location, value);
             };
           case gl.FLOAT:
-            return function(value){
+            return function (value) {
               gl.uniform1f(location, value);
             };
           case gl.FLOAT_VEC2:
-            return function(array){
+            return function (array) {
               gl.uniform2fv(location, array);
             };
           case gl.FLOAT_VEC3:
-            return function(array){
+            return function (array) {
               gl.uniform3fv(location, array);
             };
           case gl.FLOAT_VEC4:
-            return function(array){
+            return function (array) {
               gl.uniform4fv(location, array);
             };
           case gl.FLOAT_MAT3:
-            return function(array){
+            return function (array) {
               gl.uniformMatrix3fv(location, false, array);
             };
           case gl.FLOAT_MAT4:
-            return function(array){
+            return function (array) {
               gl.uniformMatrix4fv(location, false, array);
             };
         }
-        return function(){
+        return function () {
           throw "Unknown uniform type: " + type;
         };
       }
@@ -137,7 +141,7 @@
       var i, n, name, info, location;
 
       n = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
-      for(i = 0; i < n; ++i){
+      for(i = 0; i < n; ++i) {
         info = gl.getActiveUniform(program, i);
         location = gl.getUniformLocation(program, info.name);
 
@@ -150,7 +154,7 @@
       }
 
       n = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
-      for(i = 0; i < n; ++i){
+      for(i = 0; i < n; ++i) {
         info = gl.getActiveAttrib(program, i);
         location = gl.getAttribLocation(program, info.name);
         this.locations[info.name] = location;
@@ -161,25 +165,25 @@
 
     use: function (uniforms) {
       gl.useProgram(this.program);
-      if(uniforms){
-        for(var name in uniforms){
+      if(uniforms) {
+        for(var name in uniforms) {
           if(name in this.uniforms)
             this.uniforms[name](uniforms[name]);
         }
       }
     },
 
-    cleanup: function(){
+    cleanup: function () {
       gl.deleteProgram(this.program);
     }
 
   };
 
 
-  //// VBO ////
+  // ### Vertex Buffer
 
   function setWithOpts (opts, dest, defaults) {
-    for(var name in defaults){
+    for(var name in defaults) {
       dest[name] = opts[name] !== undefined ? opts[name]
                  : dest[name] !== undefined ? dest[name]
                  : defaults[name];
@@ -197,7 +201,7 @@
 
     setAttr: function (name, opts) {
       // Create buffer if none exists
-      if(!(name in this.attributes)){
+      if(!(name in this.attributes)) {
         this.attributes[name] = {
           buffer: gl.createBuffer(),
           location: null
@@ -213,7 +217,7 @@
       });
 
       var data = opts["data"];
-      if(data){
+      if(data) {
         // Ensure data is a typed array
         if(!(data instanceof Float32Array))
           data = new Float32Array(data);
@@ -237,7 +241,7 @@
         this.indices = { buffer: gl.createBuffer() };
 
       var data = opts["data"];
-      if(data){
+      if(data) {
         this.indices.length = data.length;
 
         // Ensure data is a typed array
@@ -254,22 +258,22 @@
 
     setProg: function (program) {
       this.program = program;
-      for(var name in this.attributes){
+      for(var name in this.attributes) {
         this.attributes[name].location =
           (name in program.locations) ? program.locations[name] : null;
       }
       return this;
     },
 
-    draw: function(){
+    draw: function () {
       var indices = this.indices
         , length = Number.MAX_VALUE
         , enabled_locations = [];
 
       // Bind any attributes that are used in our shader.
-      for(var name in this.attributes){
+      for(var name in this.attributes) {
         var attr = this.attributes[name];
-        if(attr.location !== null && attr.length > 0){
+        if(attr.location !== null && attr.length > 0) {
           gl.bindBuffer(gl.ARRAY_BUFFER, attr.buffer);
           gl.vertexAttribPointer(
             attr.location, attr.size, gl.FLOAT, false, attr.stride, attr.offset
@@ -280,7 +284,7 @@
         }
       }
 
-      if(indices){
+      if(indices) {
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indices.buffer);
         gl.drawElements(this.type, indices.length, gl.UNSIGNED_SHORT, 0);
       }
@@ -292,7 +296,7 @@
         gl.disableVertexAttribArray(enabled_locations[i]);
     },
 
-    cleanup: function(){
+    cleanup: function () {
       for(var name in this.attributes)
         gl.deleteBuffer(this.attributes[name].buffer);
     }
@@ -300,7 +304,7 @@
   };
 
 
-  //// TEXTURE ////
+  // ### Texture
 
   Embr.Texture = function (target) {
     this.texture = null;
@@ -327,7 +331,7 @@
       });
 
       var self = this;
-      function bind() {
+      function bind () {
         if(!self.texture)
           self.texture = gl.createTexture();
         self.bind();
@@ -395,10 +399,11 @@
   };
 
 
+  // ### Export
+
   // Export for Node.js
-  if(typeof exports !== "undefined" &&
-     typeof module !== "undefined" && module.exports) {
-    exports = module.exports = Embr;
+  if(typeof module !== "undefined" && module.exports) {
+    module.exports = Embr;
   }
 
   // Export for AMD (RequireJS and similar)
