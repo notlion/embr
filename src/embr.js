@@ -57,6 +57,15 @@
     return wrapped;
   };
 
+  function setOpts (opts, dest, defaults) {
+    for(var name in defaults) {
+      if(opts[name] !== undefined)
+        dest[name] = opts[name];
+      else if(defaults[name] !== undefined)
+        dest[name] = defaults[name];
+    }
+  }
+
 
   // ### Program
 
@@ -182,14 +191,6 @@
 
   // ### Vertex Buffer
 
-  function setWithOpts (opts, dest, defaults) {
-    for(var name in defaults) {
-      dest[name] = opts[name] !== undefined ? opts[name]
-                 : dest[name] !== undefined ? dest[name]
-                 : defaults[name];
-    }
-  }
-
   Embr.Vbo = function (type, usage) {
     this.type = type;
     this.usage = usage || gl.STATIC_DRAW;
@@ -210,7 +211,7 @@
 
       var attr = this.attributes[name];
 
-      setWithOpts(opts, attr, {
+      setOpts(opts, attr, {
         "size": 1,
         "stride": 0,
         "offset": 0
@@ -235,27 +236,26 @@
       return this;
     },
 
-    setIndices: function (opts) {
+    setIndices: function (data) {
       // Create buffer if none exists
       if(!this.indices)
         this.indices = { buffer: gl.createBuffer() };
 
-      var data = opts["data"];
-      if(data) {
-        this.indices.length = data.length;
+      this.indices.length = data.length;
 
-        // Ensure data is a typed array
-        if(!(data instanceof Uint16Array))
-          data = new Uint16Array(data);
+      // Ensure data is a typed array
+      if(!(data instanceof Uint16Array))
+        data = new Uint16Array(data);
 
-        // Buffer data
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indices.buffer);
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, data, this.usage);
-      }
+      // Buffer data
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indices.buffer);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, data, this.usage);
 
       return this;
     },
 
+    // Associate attribute locations with a shader program. This must be called
+    // before each time the VBO is drawn with a different program.
     setProg: function (program) {
       this.program = program;
       for(var name in this.attributes) {
@@ -284,10 +284,12 @@
         }
       }
 
+      // If indices are present, use glDrawElements.
       if(indices) {
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indices.buffer);
         gl.drawElements(this.type, indices.length, gl.UNSIGNED_SHORT, 0);
       }
+      // Otherwise, use glDrawArrays.
       else
         gl.drawArrays(this.type, 0, length);
 
@@ -301,6 +303,62 @@
         gl.deleteBuffer(this.attributes[name].buffer);
     }
 
+  };
+
+  // #### Vbo Primitives
+
+  Embr.Vbo.createPlane = function (x1, y1, x2, y2) {
+    var positions = [ x1, y1, 0, x1, y2, 0, x2, y1, 0, x2, y2, 0 ];
+    var normals = [ 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1 ];
+    var texcoords = [ 0, 0, 0, 1, 1, 0, 1, 1 ];
+    return new Embr.Vbo(gl.TRIANGLE_STRIP)
+      .setAttr("position", { data: positions, size: 3 })
+      .setAttr("normal",   { data: normals,   size: 3 })
+      .setAttr("texcoord", { data: texcoords, size: 2 });
+  };
+
+  Embr.Vbo.createBox = function (sx, sy, sz) {
+    var positions = [
+       sx, sy, sz,  sx,-sy, sz,  sx,-sy,-sz,  sx, sy,-sz, // +X
+       sx, sy, sz,  sx, sy,-sz, -sx, sy,-sz, -sx, sy, sz, // +Y
+       sx, sy, sz, -sx, sy, sz, -sx,-sy, sz,  sx,-sy, sz, // +Z
+      -sx, sy, sz, -sx, sy,-sz, -sx,-sy,-sz, -sx,-sy, sz, // -X
+      -sx,-sy,-sz,  sx,-sy,-sz,  sx,-sy, sz, -sx,-sy, sz, // -Y
+       sx,-sy,-sz, -sx,-sy,-sz, -sx, sy,-sz,  sx, sy,-sz  // -Z
+    ];
+
+    var normals = [
+       1, 0, 0,  1, 0, 0,  1, 0, 0,  1, 0, 0,
+       0, 1, 0,  0, 1, 0,  0, 1, 0,  0, 1, 0,
+       0, 0, 1,  0, 0, 1,  0, 0, 1,  0, 0, 1,
+      -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0,
+       0,-1, 0,  0,-1, 0,  0,-1, 0,  0,-1, 0,
+       0, 0,-1,  0, 0,-1,  0, 0,-1,  0, 0,-1
+    ];
+
+    var texcoords = [
+      0,1, 1,1, 1,0, 0,0,
+      1,1, 1,0, 0,0, 0,1,
+      0,1, 1,1, 1,0, 0,0,
+      1,1, 1,0, 0,0, 0,1,
+      1,0, 0,0, 0,1, 1,1,
+      1,0, 0,0, 0,1, 1,1
+    ];
+
+    var indices = [
+       0, 1, 2, 0, 2, 3,
+       4, 5, 6, 4, 6, 7,
+       8, 9,10, 8,10,11,
+      12,13,14,12,14,15,
+      16,17,18,16,18,19,
+      20,21,22,20,22,23
+    ];
+
+    return new Embr.Vbo(gl.TRIANGLES)
+      .setAttr("position", { data: positions, size: 3 })
+      .setAttr("normal",   { data: normals,   size: 3 })
+      .setAttr("texcoord", { data: texcoords, size: 2 })
+      .setIndices(indices);
   };
 
 
@@ -317,7 +375,7 @@
       var params = this.params
         , prw = params.width, prh = params.height;
 
-      setWithOpts(opts, params, {
+      setOpts(opts, params, {
         "unit": 0,
         "format": gl.RGBA,
         "format_internal": gl.RGBA,
@@ -337,25 +395,23 @@
         self.bind();
       }
 
-      if(opts.data) {
-        if(prw !== params.width || prh !== this.height) {
-          bind();
-          gl.texImage2D(this.target, 0, params.format_internal,
-                                        params.width,
-                                        params.height,
-                                        0,
-                                        params.format,
-                                        params.type,
-                                        opts.data);
-        }
-        else if(prw && prh) {
-          bind();
-          gl.texSubImage2D(this.target, 0, 0, 0, params.width,
-                                                 params.height,
-                                                 params.format,
-                                                 params.type,
-                                                 opts.data);
-        }
+      if(prw !== params.width || prh !== this.height) {
+        bind();
+        gl.texImage2D(this.target, 0, params.format_internal,
+                                      params.width,
+                                      params.height,
+                                      0,
+                                      params.format,
+                                      params.type,
+                                      opts.data || null);
+      }
+      else if(prw && prh && opts.data) {
+        bind();
+        gl.texSubImage2D(this.target, 0, 0, 0, params.width,
+                                               params.height,
+                                               params.format,
+                                               params.type,
+                                               opts.data);
       }
       else if(opts.element) {
         bind();
@@ -394,6 +450,113 @@
 
     cleanup: function () {
       gl.deleteTexture(this.texture);
+    }
+
+  };
+
+
+  // ### Render Buffer
+
+  Embr.Rbo = function () {
+    this.buffer = gl.createRenderbuffer();
+    this.target = gl.RENDERBUFFER;
+    this.params = {};
+  };
+  Embr.Rbo.prototype = {
+
+    set: function (opts) {
+      var params = this.params
+        , prw = params.width, prh = params.height;
+
+      setOpts(opts, params, {
+        "format_internal": gl.DEPTH_COMPONENT16,
+        "width": 0,
+        "height": 0
+      });
+
+      if(prw !== params.width || prh !== this.height) {
+        this.bind();
+        gl.renderbufferStorage(this.target, params.format_internal,
+                                            params.width,
+                                            params.height);
+      }
+
+      return this;
+    },
+
+    bind: function () {
+      gl.bindRenderbuffer(this.target, this.buffer);
+    },
+
+    unbind: function () {
+      gl.bindRenderbuffer(this.target, null);
+    },
+
+    cleanup: function () {
+      gl.deleteRenderbuffer(this.buffer);
+    }
+
+  };
+
+
+  // ### Frame Buffer
+
+  Embr.Fbo = function () {
+    this.buffer = gl.createFramebuffer();
+    this.textures = [];
+    this.renderbuffers = [];
+    this.params = {};
+  };
+  Embr.Fbo.prototype = {
+
+    // TODO: This should actually get the next attachment position.
+    getNextColorAttachment: function () {
+      var attachment = gl.COLOR_ATTACHMENT0;
+      return attachment;
+    },
+
+    attach: function (obj, attachment) {
+      this.bind();
+      obj.bind();
+      if(obj instanceof Embr.Texture) {
+        if(attachment === undefined)
+          attachment = this.getNextColorAttachment();
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, attachment, obj.target,
+                                                            obj.texture,
+                                                            0);
+        this.textures.push(obj);
+      }
+      else if(obj instanceof Embr.Rbo) {
+        if(attachment === undefined)
+          attachment = gl.DEPTH_ATTACHMENT;
+        gl.framebufferRenderbuffer(gl.FRAMEBUFFER, attachment, obj.target,
+                                                               obj.buffer);
+        this.renderbuffers.push(obj);
+      }
+      obj.unbind();
+      this.unbind();
+
+      return this;
+    },
+
+    check: function () {
+      this.bind();
+      if(gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE)
+        throw "GL Error: Incomplete Framebuffer";
+      this.unbind();
+      return this;
+    },
+
+    bind: function () {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this.buffer);
+    },
+
+    unbind: function () {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    },
+
+    cleanup: function () {
+      gl.deleteFramebuffer(this.buffer);
     }
 
   };

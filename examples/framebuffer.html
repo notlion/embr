@@ -1,0 +1,136 @@
+<!DOCTYPE HTML>
+<head>
+  <title>Embr : Framebuffer Example</title>
+  <script src="../src/embr.js"></script>
+  <script src="../lib/gl-matrix.js"></script>
+  <style>
+  html, body {
+    width: 100%; height: 100%;
+    padding: 0; margin: 0;
+  }
+  #glcanvas {
+    width: 100%; height: 100%;
+  }
+  </style>
+</head>
+<body onload="init()">
+<script>
+
+function init () {
+  var canvas = document.getElementById("glcanvas")
+    , gl = canvas.getContext("experimental-webgl");
+
+  Embr.setContext(Embr.wrapContextWithErrorChecks(gl));
+
+  var prog = new Embr.Program(
+    document.getElementById("prog-vs").textContent,
+    document.getElementById("prog-fs").textContent
+  ).link();
+
+  var plane = Embr.Vbo.createPlane(-1, -1, 1, 1).setProg(prog);
+
+  var fbo_width = fbo_height = 32;
+  var fbo = new Embr.Fbo()
+    .attach(new Embr.Texture().set({
+      width: fbo_width,
+      height: fbo_height,
+      data: null
+    }))
+    .attach(new Embr.Rbo().set({
+      width: fbo_width,
+      height: fbo_height
+    }))
+    .check();
+
+  function resize () {
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+  }
+
+  function clearViewport (r, g, b, width, height) {
+    gl.viewport(0, 0, width, height);
+    gl.clearColor(r, g, b, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT, gl.DEPTH_BUFFER_BIT);
+  }
+
+  function draw () {
+    var time = Date.now() / 1000;
+
+    // First pass. Draw to framebuffer.
+    var transform = mat4.identity();
+    mat4.scale(transform, vec3.create([ 0.5, 0.5, 0.5 ]));
+    mat4.rotateZ(transform, time);
+
+    fbo.bind();
+
+    clearViewport(0, 0, 0, fbo_width, fbo_height);
+
+    prog.use({
+      u_mvp_matrix: transform,
+      u_color: [ 0, 0, 1, 1 ]
+    });
+
+    plane.draw();
+
+    fbo.unbind();
+
+    // Second pass. Draw to screen.
+    var aspect = canvas.width / canvas.height;
+    mat4.ortho(-aspect, aspect, -1, 1, -1, 1, transform);
+    mat4.rotateZ(transform, -time);
+
+    clearViewport(0, 0.25, 0, canvas.width, canvas.height);
+
+    fbo.textures[0].bind();
+
+    prog.use({
+      u_mvp_matrix: transform,
+      u_texture: 0,
+      u_color: [ 0, 1, 0, 1 ]
+    });
+
+    plane.draw();
+
+    fbo.textures[0].unbind();
+  }
+
+  window.addEventListener("resize", resize);
+  resize();
+  setInterval(draw, 1000 / 30);
+}
+
+</script>
+<script id="prog-vs" type="x-shader/x-vertex">
+
+uniform mat4 u_mvp_matrix;
+
+attribute vec3 position;
+attribute vec2 texcoord;
+
+varying vec2 v_texcoord;
+
+void main() {
+  v_texcoord = texcoord;
+  gl_Position = u_mvp_matrix * vec4(position, 1.);
+}
+
+</script>
+<script id="prog-fs" type="x-shader/x-fragment">
+
+precision highp float;
+
+uniform sampler2D u_texture;
+uniform vec4 u_color;
+
+varying vec2 v_texcoord;
+
+void main() {
+  gl_FragColor = u_color + texture2D(u_texture, v_texcoord);
+}
+
+</script>
+<canvas id="glcanvas">
+Your browser doesn't appear to support the HTML5 <code>&lt;canvas&gt;</code> element.
+</canvas>
+</body>
+</html>
