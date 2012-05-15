@@ -8,6 +8,27 @@
   var gl = null;
   Embr.setContext = function (_gl) {
     Embr.gl = gl = _gl;
+
+    // Set default parameters which require the GL context.
+
+    Texture.param_defaults = {
+      "unit": 0,
+      "format": gl.RGBA,
+      "format_internal": gl.RGBA,
+      "type": gl.UNSIGNED_BYTE,
+      "filter_min": gl.NEAREST,
+      "filter_mag": gl.NEAREST,
+      "wrap_s": gl.CLAMP_TO_EDGE,
+      "wrap_t": gl.CLAMP_TO_EDGE,
+      "width": 0,
+      "height": 0
+    };
+
+    Rbo.param_defaults = {
+      "format_internal": gl.DEPTH_COMPONENT16,
+      "width": 0,
+      "height": 0
+    };
   };
 
 
@@ -57,11 +78,11 @@
     return wrapped;
   };
 
-  function setOpts (opts, dest, defaults) {
+  function setParams (opts, dest, defaults) {
     for(var name in defaults) {
       if(opts[name] !== undefined)
         dest[name] = opts[name];
-      else if(defaults[name] !== undefined)
+      else if(dest[name] === undefined)
         dest[name] = defaults[name];
     }
   }
@@ -191,14 +212,14 @@
 
   // ### Vertex Buffer
 
-  Embr.Vbo = function (type, usage) {
+  var Vbo = Embr.Vbo = function (type, usage) {
     this.type = type;
     this.usage = usage || gl.STATIC_DRAW;
     this.program = null;
     this.indices = null;
     this.attributes = {};
   }
-  Embr.Vbo.prototype = {
+  Vbo.prototype = {
 
     setAttr: function (name, opts) {
       // Create buffer if none exists
@@ -211,11 +232,7 @@
 
       var attr = this.attributes[name];
 
-      setOpts(opts, attr, {
-        "size": 1,
-        "stride": 0,
-        "offset": 0
-      });
+      setParams(opts, attr, Vbo.attr_param_defaults);
 
       var data = opts["data"];
       if(data) {
@@ -284,6 +301,10 @@
         }
       }
 
+      // If no attributes are enabled, bail out.
+      if(enabled_locations.length === 0)
+        return;
+
       // If indices are present, use glDrawElements.
       if(indices) {
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indices.buffer);
@@ -305,19 +326,25 @@
 
   };
 
+  Vbo.attr_param_defaults = {
+    "size": 1,
+    "stride": 0,
+    "offset": 0
+  };
+
   // #### Vbo Primitives
 
-  Embr.Vbo.createPlane = function (x1, y1, x2, y2) {
+  Vbo.createPlane = function (x1, y1, x2, y2) {
     var positions = [ x1, y1, 0, x1, y2, 0, x2, y1, 0, x2, y2, 0 ];
     var normals = [ 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1 ];
     var texcoords = [ 0, 0, 0, 1, 1, 0, 1, 1 ];
-    return new Embr.Vbo(gl.TRIANGLE_STRIP)
+    return new Vbo(gl.TRIANGLE_STRIP)
       .setAttr("position", { data: positions, size: 3 })
       .setAttr("normal",   { data: normals,   size: 3 })
       .setAttr("texcoord", { data: texcoords, size: 2 });
   };
 
-  Embr.Vbo.createBox = function (sx, sy, sz) {
+  Vbo.createBox = function (sx, sy, sz) {
     var positions = [
        sx, sy, sz,  sx,-sy, sz,  sx,-sy,-sz,  sx, sy,-sz, // +X
        sx, sy, sz,  sx, sy,-sz, -sx, sy,-sz, -sx, sy, sz, // +Y
@@ -354,7 +381,7 @@
       20,21,22,20,22,23
     ];
 
-    return new Embr.Vbo(gl.TRIANGLES)
+    return new Vbo(gl.TRIANGLES)
       .setAttr("position", { data: positions, size: 3 })
       .setAttr("normal",   { data: normals,   size: 3 })
       .setAttr("texcoord", { data: texcoords, size: 2 })
@@ -364,29 +391,18 @@
 
   // ### Texture
 
-  Embr.Texture = function (target) {
+  var Texture = Embr.Texture = function (target) {
     this.texture = null;
     this.target = target || gl.TEXTURE_2D;
     this.params = {};
   };
-  Embr.Texture.prototype = {
+  Texture.prototype = {
 
     set: function (opts) {
       var params = this.params
         , prw = params.width, prh = params.height;
 
-      setOpts(opts, params, {
-        "unit": 0,
-        "format": gl.RGBA,
-        "format_internal": gl.RGBA,
-        "type": gl.UNSIGNED_BYTE,
-        "filter_min": gl.NEAREST,
-        "filter_mag": gl.NEAREST,
-        "wrap_s": gl.CLAMP_TO_EDGE,
-        "wrap_t": gl.CLAMP_TO_EDGE,
-        "width": 0,
-        "height": 0
-      });
+      setParams(opts, params, Texture.param_defaults);
 
       var self = this;
       function bind () {
@@ -395,23 +411,25 @@
         self.bind();
       }
 
-      if(prw !== params.width || prh !== this.height) {
-        bind();
-        gl.texImage2D(this.target, 0, params.format_internal,
-                                      params.width,
-                                      params.height,
-                                      0,
-                                      params.format,
-                                      params.type,
-                                      opts.data || null);
-      }
-      else if(prw && prh && opts.data) {
-        bind();
-        gl.texSubImage2D(this.target, 0, 0, 0, params.width,
-                                               params.height,
-                                               params.format,
-                                               params.type,
-                                               opts.data);
+      if(opts.data !== undefined) {
+        if(prw !== params.width || prh !== this.height) {
+          bind();
+          gl.texImage2D(this.target, 0, params.format_internal,
+                                        params.width,
+                                        params.height,
+                                        0,
+                                        params.format,
+                                        params.type,
+                                        opts.data);
+        }
+        else if(prw && prh && opts.data) {
+          bind();
+          gl.texSubImage2D(this.target, 0, 0, 0, params.width,
+                                                 params.height,
+                                                 params.format,
+                                                 params.type,
+                                                 opts.data);
+        }
       }
       else if(opts.element) {
         bind();
@@ -457,22 +475,18 @@
 
   // ### Render Buffer
 
-  Embr.Rbo = function () {
+  var Rbo = Embr.Rbo = function () {
     this.buffer = gl.createRenderbuffer();
     this.target = gl.RENDERBUFFER;
     this.params = {};
   };
-  Embr.Rbo.prototype = {
+  Rbo.prototype = {
 
     set: function (opts) {
       var params = this.params
         , prw = params.width, prh = params.height;
 
-      setOpts(opts, params, {
-        "format_internal": gl.DEPTH_COMPONENT16,
-        "width": 0,
-        "height": 0
-      });
+      setParams(opts, params, Rbo.param_defaults);
 
       if(prw !== params.width || prh !== this.height) {
         this.bind();
