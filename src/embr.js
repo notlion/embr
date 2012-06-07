@@ -1,4 +1,4 @@
-(function(context){
+(function (context) {
 
   "use strict";
 
