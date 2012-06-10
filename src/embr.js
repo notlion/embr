@@ -93,6 +93,7 @@
   Embr.Program = function (vsrc, fsrc) {
     if(vsrc || fsrc)
       this.compile(vsrc, fsrc);
+    this.linked = false;
   };
   Embr.Program.prototype = {
 
@@ -190,15 +191,19 @@
         this.locations[info.name] = location;
       }
 
+      this.linked = true;
+
       return this;
     },
 
     use: function (uniforms) {
-      gl.useProgram(this.program);
-      if(uniforms) {
-        for(var name in uniforms) {
-          if(name in this.uniforms)
-            this.uniforms[name](uniforms[name]);
+      if(this.linked) {
+        gl.useProgram(this.program);
+        if(uniforms) {
+          for(var name in uniforms) {
+            if(name in this.uniforms)
+              this.uniforms[name](uniforms[name]);
+          }
         }
       }
     },
