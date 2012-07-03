@@ -12,6 +12,7 @@
     // Set default parameters which require the GL context.
 
     Texture.param_defaults = {
+      "target": gl.TEXTURE_2D,
       "unit": 0,
       "format": gl.RGBA,
       "format_internal": gl.RGBA,
@@ -21,10 +22,12 @@
       "wrap_s": gl.CLAMP_TO_EDGE,
       "wrap_t": gl.CLAMP_TO_EDGE,
       "width": 0,
-      "height": 0
+      "height": 0,
+      "flip_y": false // Only works when 'element' is specified currently.
     };
 
     Rbo.param_defaults = {
+      "target": gl.RENDERBUFFER,
       "format_internal": gl.DEPTH_COMPONENT16,
       "width": 0,
       "height": 0
@@ -36,24 +39,28 @@
 
   var gl_enums = null;
 
+  Embr.getGLEnumName = function (e) {
+    if(!gl_enums) {
+      // Build GL enums lookup dictionary if necessary.
+      gl_enums = {};
+      for(var name in gl) {
+        if(typeof gl[name] == "number")
+          gl_enums[gl[name]] = name;
+      }
+    }
+    return gl_enums[e];
+  };
+
   Embr.checkError = function (gl, msg) {
-    var name, err, errs = [];
+    var err, errs = [];
     // Check for any GL errors.
     while((err = gl.getError()) !== gl.NO_ERROR) {
       errs.push(err);
     }
     if(errs.length > 0) {
-      // Build GL enums lookup dictionary if necessary.
-      if(!gl_enums) {
-        gl_enums = {};
-        for(name in gl) {
-          if(typeof gl[name] == "number")
-            gl_enums[gl[name]] = name;
-        }
-      }
       // Throw all GL errors.
       throw msg + ": " + errs.map(function (err) {
-        return gl_enums[err];
+        return Embr.getGLEnumName(err);
       }).join(", ");
     }
   };
@@ -67,7 +74,7 @@
         wrapped[name] = (function (name, fn) {
           return function () {
             var res = fn.apply(gl, arguments);
-            Embr.checkError(gl, "GL Error in " + name);
+            Embr.checkError(gl, "GL Error in '" + name + "'");
             return res;
           };
         })(name, prop);
@@ -396,20 +403,23 @@
 
   // ### Texture
 
-  var Texture = Embr.Texture = function (target) {
+  var Texture = Embr.Texture = function (opts) {
     this.texture = null;
-    this.target = target || gl.TEXTURE_2D;
     this.params = {};
+    this.set(opts);
   };
   Texture.prototype = {
 
     set: function (opts) {
-      var params = this.params
-        , prw = params.width, prh = params.height;
+      var opts = opts || {}
+        , params = this.params
+        , prw = params.width, prh = params.height
+        , self = this;
 
       setParams(opts, params, Texture.param_defaults);
 
-      var self = this;
+      var target = params.target;
+
       function bind () {
         if(!self.texture)
           self.texture = gl.createTexture();
@@ -419,37 +429,38 @@
       if(opts.data !== undefined) {
         if(prw !== params.width || prh !== this.height) {
           bind();
-          gl.texImage2D(this.target, 0, params.format_internal,
-                                        params.width,
-                                        params.height,
-                                        0,
-                                        params.format,
-                                        params.type,
-                                        opts.data);
+          gl.texImage2D(target, 0, params.format_internal,
+                                   params.width,
+                                   params.height,
+                                   0,
+                                   params.format,
+                                   params.type,
+                                   opts.data);
         }
         else if(prw && prh && opts.data) {
           bind();
-          gl.texSubImage2D(this.target, 0, 0, 0, params.width,
-                                                 params.height,
-                                                 params.format,
-                                                 params.type,
-                                                 opts.data);
+          gl.texSubImage2D(target, 0, 0, 0, params.width,
+                                            params.height,
+                                            params.format,
+                                            params.type,
+                                            opts.data);
         }
       }
       else if(opts.element) {
         bind();
-        // gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-        gl.texImage2D(this.target, 0, params.format_internal,
-                                      params.format,
-                                      params.type,
-                                      opts.element);
+        if(params.flip_y)
+          gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+        gl.texImage2D(target, 0, params.format_internal,
+                                 params.format,
+                                 params.type,
+                                 opts.element);
       }
 
       if(this.texture) {
-        gl.texParameteri(this.target, gl.TEXTURE_MIN_FILTER, params.filter_min);
-        gl.texParameteri(this.target, gl.TEXTURE_MAG_FILTER, params.filter_mag);
-        gl.texParameteri(this.target, gl.TEXTURE_WRAP_S, params.wrap_s);
-        gl.texParameteri(this.target, gl.TEXTURE_WRAP_T, params.wrap_t);
+        gl.texParameteri(target, gl.TEXTURE_MIN_FILTER, params.filter_min);
+        gl.texParameteri(target, gl.TEXTURE_MAG_FILTER, params.filter_mag);
+        gl.texParameteri(target, gl.TEXTURE_WRAP_S, params.wrap_s);
+        gl.texParameteri(target, gl.TEXTURE_WRAP_T, params.wrap_t);
       }
 
       return this;
@@ -460,14 +471,14 @@
         this.params.unit = unit;
       if(this.texture) {
         gl.activeTexture(gl.TEXTURE0 + this.params.unit);
-        gl.bindTexture(this.target, this.texture);
+        gl.bindTexture(this.params.target, this.texture);
       }
     },
 
     unbind: function () {
       if(this.texture) {
         gl.activeTexture(gl.TEXTURE0 + this.params.unit);
-        gl.bindTexture(this.target, null);
+        gl.bindTexture(this.params.target, null);
       }
     },
 
@@ -480,35 +491,36 @@
 
   // ### Render Buffer
 
-  var Rbo = Embr.Rbo = function () {
+  var Rbo = Embr.Rbo = function (opts) {
     this.buffer = gl.createRenderbuffer();
-    this.target = gl.RENDERBUFFER;
     this.params = {};
+    this.set(opts);
   };
   Rbo.prototype = {
 
     set: function (opts) {
-      var params = this.params
+      var opts = opts || {}
+        , params = this.params
         , prw = params.width, prh = params.height;
 
       setParams(opts, params, Rbo.param_defaults);
 
       if(prw !== params.width || prh !== this.height) {
         this.bind();
-        gl.renderbufferStorage(this.target, params.format_internal,
-                                            params.width,
-                                            params.height);
+        gl.renderbufferStorage(params.target, params.format_internal,
+                                              params.width,
+                                              params.height);
       }
 
       return this;
     },
 
     bind: function () {
-      gl.bindRenderbuffer(this.target, this.buffer);
+      gl.bindRenderbuffer(this.params.target, this.buffer);
     },
 
     unbind: function () {
-      gl.bindRenderbuffer(this.target, null);
+      gl.bindRenderbuffer(this.params.target, null);
     },
 
     cleanup: function () {
@@ -524,7 +536,6 @@
     this.buffer = gl.createFramebuffer();
     this.textures = [];
     this.renderbuffers = [];
-    this.params = {};
   };
   Embr.Fbo.prototype = {
 
@@ -540,16 +551,17 @@
       if(obj instanceof Embr.Texture) {
         if(attachment === undefined)
           attachment = this.getNextColorAttachment();
-        gl.framebufferTexture2D(gl.FRAMEBUFFER, attachment, obj.target,
-                                                            obj.texture,
-                                                            0);
+        gl.framebufferTexture2D(
+          gl.FRAMEBUFFER, attachment, obj.params.target, obj.texture, 0
+        );
         this.textures.push(obj);
       }
       else if(obj instanceof Embr.Rbo) {
         if(attachment === undefined)
           attachment = gl.DEPTH_ATTACHMENT;
-        gl.framebufferRenderbuffer(gl.FRAMEBUFFER, attachment, obj.target,
-                                                               obj.buffer);
+        gl.framebufferRenderbuffer(
+          gl.FRAMEBUFFER, attachment, obj.params.target, obj.buffer
+        );
         this.renderbuffers.push(obj);
       }
       obj.unbind();
@@ -560,8 +572,18 @@
 
     check: function () {
       this.bind();
-      if(gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE)
-        throw "GL Error: Incomplete Framebuffer";
+      var status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+      if(status !== gl.FRAMEBUFFER_COMPLETE) {
+        [ "INCOMPLETE_ATTACHMENT",
+          "INCOMPLETE_MISSING_ATTACHMENT",
+          "INCOMPLETE_DIMENSIONS",
+          "UNSUPPORTED"
+        ].forEach(function (name) {
+          if(status === gl["FRAMEBUFFER_" + name])
+            status = name;
+        });
+        throw "Framebuffer Status: " + status;
+      }
       this.unbind();
       return this;
     },
