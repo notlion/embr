@@ -17,10 +17,8 @@
       "format": gl.RGBA,
       "format_internal": gl.RGBA,
       "type": gl.UNSIGNED_BYTE,
-      "filter_min": gl.NEAREST,
-      "filter_mag": gl.NEAREST,
-      "wrap_s": gl.CLAMP_TO_EDGE,
-      "wrap_t": gl.CLAMP_TO_EDGE,
+      "filter": gl.NEAREST,
+      "wrap": gl.CLAMP_TO_EDGE,
       "width": 0,
       "height": 0,
       "flip_y": false // Only works when 'element' is specified currently.
@@ -457,10 +455,14 @@
       }
 
       if(this.texture) {
-        gl.texParameteri(target, gl.TEXTURE_MIN_FILTER, params.filter_min);
-        gl.texParameteri(target, gl.TEXTURE_MAG_FILTER, params.filter_mag);
-        gl.texParameteri(target, gl.TEXTURE_WRAP_S, params.wrap_s);
-        gl.texParameteri(target, gl.TEXTURE_WRAP_T, params.wrap_t);
+        gl.texParameteri(target, gl.TEXTURE_MIN_FILTER, params.filter_min ||
+                                                        params.filter);
+        gl.texParameteri(target, gl.TEXTURE_MAG_FILTER, params.filter_mag ||
+                                                        params.filter);
+        gl.texParameteri(target, gl.TEXTURE_WRAP_S, params.wrap_s ||
+                                                    params.wrap);
+        gl.texParameteri(target, gl.TEXTURE_WRAP_T, params.wrap_t ||
+                                                    params.wrap);
       }
 
       return this;
