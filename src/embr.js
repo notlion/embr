@@ -11,6 +11,12 @@
 
     // Set default parameters which require the GL context.
 
+    Vbo.attr_param_defaults = {
+      "size": 1,
+      "stride": 0,
+      "offset": 0
+    };
+
     Texture.param_defaults = {
       "target": gl.TEXTURE_2D,
       "unit": 0,
@@ -336,11 +342,6 @@
 
   };
 
-  Vbo.attr_param_defaults = {
-    "size": 1,
-    "stride": 0,
-    "offset": 0
-  };
 
   // #### Vbo Primitives
 
