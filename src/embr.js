@@ -290,10 +290,12 @@
     // Associate attribute locations with a shader program. This must be called
     // before each time the VBO is drawn with a different program.
     setProg: function (program) {
-      this.program = program;
-      for(var name in this.attributes) {
-        this.attributes[name].location =
-          (name in program.locations) ? program.locations[name] : null;
+      if(program.linked) {
+        this.program = program;
+        for(var name in this.attributes) {
+          this.attributes[name].location =
+            (name in program.locations) ? program.locations[name] : null;
+        }
       }
       return this;
     },
@@ -426,7 +428,7 @@
       }
 
       if(opts.data !== undefined) {
-        if(prw !== params.width || prh !== this.height) {
+        if(prw !== params.width || prh !== params.height) {
           bind();
           gl.texImage2D(target, 0, params.format_internal,
                                    params.width,
@@ -436,7 +438,7 @@
                                    params.type,
                                    opts.data);
         }
-        else if(prw && prh && opts.data) {
+        else if(prw && prh) {
           bind();
           gl.texSubImage2D(target, 0, 0, 0, params.width,
                                             params.height,
@@ -465,6 +467,8 @@
         gl.texParameteri(target, gl.TEXTURE_WRAP_T, params.wrap_t ||
                                                     params.wrap);
       }
+
+      this.unbind();
 
       return this;
     },
@@ -542,7 +546,8 @@
   };
   Embr.Fbo.prototype = {
 
-    // TODO: This should actually get the next attachment position.
+    // WebGL does not currently support multiple render targets, and will error
+    // with any color attachment above COLOR_ATTACHMENT0.
     getNextColorAttachment: function () {
       var attachment = gl.COLOR_ATTACHMENT0;
       return attachment;
