@@ -217,6 +217,7 @@
           }
         }
       }
+      return this;
     },
 
     cleanup: function () {
