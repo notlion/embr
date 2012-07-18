@@ -632,6 +632,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
     cleanup: function () {
       gl.deleteFramebuffer(this.buffer);
+      var i;
+      for(i = this.textures.length; --i >= 0;)
+        this.textures[i].cleanup();
+      for(i = this.renderbuffers.length; --i >= 0;)
+        this.renderbuffers[i].cleanup();
     }
 
   };
