@@ -461,15 +461,23 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
       var target = params.target;
 
-      function bind () {
+      function createAndBind () {
         if(!self.texture)
           self.texture = gl.createTexture();
         self.bind();
       }
 
-      if(opts.data !== undefined) {
-        if(prw !== params.width || prh !== params.height) {
-          bind();
+      if(opts.data !== undefined && params.width > 0 && params.height > 0) {
+        if(prw === params.width && prh === params.height) {
+          createAndBind();
+          gl.texSubImage2D(target, 0, 0, 0, params.width,
+                                            params.height,
+                                            params.format,
+                                            params.type,
+                                            opts.data);
+        }
+        else {
+          createAndBind();
           gl.texImage2D(target, 0, params.format_internal,
                                    params.width,
                                    params.height,
@@ -478,17 +486,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
                                    params.type,
                                    opts.data);
         }
-        else if(prw && prh) {
-          bind();
-          gl.texSubImage2D(target, 0, 0, 0, params.width,
-                                            params.height,
-                                            params.format,
-                                            params.type,
-                                            opts.data);
-        }
       }
       else if(opts.element) {
-        bind();
+        createAndBind();
 
         if(params.flip_y)
           gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
@@ -633,11 +633,13 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
       this.bind();
       var status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
       if(status !== gl.FRAMEBUFFER_COMPLETE) {
-        [ "INCOMPLETE_ATTACHMENT",
+        [
+          "INCOMPLETE_ATTACHMENT",
           "INCOMPLETE_MISSING_ATTACHMENT",
           "INCOMPLETE_DIMENSIONS",
           "UNSUPPORTED"
-        ].forEach(function (name) {
+        ]
+        .forEach(function (name) {
           if(status === gl["FRAMEBUFFER_" + name])
             status = name;
         });
