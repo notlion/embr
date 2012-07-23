@@ -28,13 +28,23 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
   "use strict";
 
 
-  var Embr = {};
+  var Embr = {}
+    , gl, gl_mipmap_filters;
 
-  var gl = null;
+
   Embr.setContext = function (_gl) {
     Embr.gl = gl = _gl;
 
-    // Set default parameters which require the GL context.
+    // Cache GL constants for later use.
+
+    gl_mipmap_filters = [
+      gl.NEAREST_MIPMAP_NEAREST,
+      gl.LINEAR_MIPMAP_NEAREST,
+      gl.NEAREST_MIPMAP_LINEAR,
+      gl.LINEAR_MIPMAP_LINEAR
+    ];
+
+    // Set object default parameters.
 
     Vbo.attr_param_defaults = {
       "size": 1,
@@ -479,8 +489,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
       }
       else if(opts.element) {
         bind();
+
         if(params.flip_y)
           gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+
         gl.texImage2D(target, 0, params.format_internal,
                                  params.format,
                                  params.type,
@@ -488,14 +500,23 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
       }
 
       if(this.texture) {
-        gl.texParameteri(target, gl.TEXTURE_MIN_FILTER, params.filter_min ||
-                                                        params.filter);
-        gl.texParameteri(target, gl.TEXTURE_MAG_FILTER, params.filter_mag ||
-                                                        params.filter);
-        gl.texParameteri(target, gl.TEXTURE_WRAP_S, params.wrap_s ||
-                                                    params.wrap);
-        gl.texParameteri(target, gl.TEXTURE_WRAP_T, params.wrap_t ||
-                                                    params.wrap);
+        var fmin = params.filter_min || params.filter
+          , fmag = params.filter_mag || params.filter
+          , ws = params.wrap_s || params.wrap
+          , wt = params.wrap_t || params.wrap;
+
+        gl.texParameteri(target, gl.TEXTURE_MIN_FILTER, fmin);
+        gl.texParameteri(target, gl.TEXTURE_MAG_FILTER, fmag);
+        gl.texParameteri(target, gl.TEXTURE_WRAP_S, ws);
+        gl.texParameteri(target, gl.TEXTURE_WRAP_T, wt);
+
+        // Generate mipmap if necessary.
+        for(var i = gl_mipmap_filters.length; --i >= 0;) {
+          if(fmin === gl_mipmap_filters[i]) {
+            gl.generateMipmap(target);
+            break;
+          }
+        }
       }
 
       this.unbind();
