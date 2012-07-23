@@ -49,7 +49,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
       "format_internal": gl.RGBA,
       "type": gl.UNSIGNED_BYTE,
       "filter": gl.NEAREST,
+      "filter_min": null,
+      "filter_mag": null,
       "wrap": gl.CLAMP_TO_EDGE,
+      "wrap_s": null,
+      "wrap_t": null,
       "width": 0,
       "height": 0,
       "flip_y": false // Only works when 'element' is specified currently.
