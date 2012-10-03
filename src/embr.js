@@ -178,7 +178,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
         throw gl.getProgramInfoLog(program);
 
       function makeUniformSetter (type, location) {
-        switch(type){
+        switch(type) {
           case gl.BOOL:
           case gl.INT:
           case gl.SAMPLER_2D:
@@ -201,6 +201,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
           case gl.FLOAT_VEC4:
             return function (array) {
               gl.uniform4fv(location, array);
+            };
+          case gl.FLOAT_MAT2:
+            return function (array) {
+              gl.uniformMatrix2fv(location, false, array);
             };
           case gl.FLOAT_MAT3:
             return function (array) {
