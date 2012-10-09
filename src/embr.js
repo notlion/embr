@@ -472,8 +472,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
       }
 
       if(opts.data !== undefined && params.width > 0 && params.height > 0) {
+        createAndBind();
         if(prw === params.width && prh === params.height) {
-          createAndBind();
           gl.texSubImage2D(target, 0, 0, 0, params.width,
                                             params.height,
                                             params.format,
@@ -481,7 +481,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
                                             opts.data);
         }
         else {
-          createAndBind();
           gl.texImage2D(target, 0, params.format_internal,
                                    params.width,
                                    params.height,
