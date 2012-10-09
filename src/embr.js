@@ -593,6 +593,13 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
   // ### Frame Buffer
 
+  var fbo_status_suffixes = [
+    "INCOMPLETE_ATTACHMENT",
+    "INCOMPLETE_MISSING_ATTACHMENT",
+    "INCOMPLETE_DIMENSIONS",
+    "UNSUPPORTED"
+  ];
+
   Embr.Fbo = function () {
     this.buffer = gl.createFramebuffer();
     this.textures = [];
@@ -636,13 +643,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
       this.bind();
       var status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
       if(status !== gl.FRAMEBUFFER_COMPLETE) {
-        [
-          "INCOMPLETE_ATTACHMENT",
-          "INCOMPLETE_MISSING_ATTACHMENT",
-          "INCOMPLETE_DIMENSIONS",
-          "UNSUPPORTED"
-        ]
-        .forEach(function (name) {
+        fbo_status_suffixes.forEach(function (name) {
           if(status === gl["FRAMEBUFFER_" + name])
             status = name;
         });
