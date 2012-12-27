@@ -172,7 +172,7 @@
             return (array) -> gl.uniformMatrix3fv(location, false, array)
           when gl.FLOAT_MAT4
             return (array) -> gl.uniformMatrix4fv(location, false, array)
-        return -> throw "Unknown uniform type: " + type
+        return -> throw "Unknown uniform type: #{type}"
 
       @uniforms = {}
       @locations = {}
