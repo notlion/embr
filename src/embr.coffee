@@ -91,7 +91,8 @@
       errs.push(err)
     if errs.length > 0
       # Throw all GL errors.
-      throw msg + ": " + errs.map(embr.getGLEnumName).join(", ")
+      names = (embr.getGLEnumName(e) for e in errs)
+      throw "#{msg}: #{names.join(', ')}"
 
   # Create a GL context which checks for errors after every call.
   embr.wrapContextWithErrorChecks = (gl) ->
@@ -459,8 +460,8 @@
       @bind()
       status = gl.checkFramebufferStatus(gl.FRAMEBUFFER)
       if status != gl.FRAMEBUFFER_COMPLETE
-        status_suffixes.forEach (name) ->
-          if status == gl["FRAMEBUFFER_#{name}"]
+        for suffix in status_suffixes
+          if status == gl["FRAMEBUFFER_#{suffix}"]
             throw "Framebuffer Status: #{status}"
       @unbind()
       return @
