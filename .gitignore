@@ -7,4 +7,5 @@ embr-plask.js
 embr-webgl.js
 embr-webgl.min.js
 
+build/
 node_modules/

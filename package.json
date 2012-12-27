@@ -1,0 +1,8 @@
+{
+  "name": "embr"
+, "version": "0.0.0"
+, "dependencies": {
+    "coffee-script": ">= 1.4.0"
+  , "docco": "*"
+  }
+}
