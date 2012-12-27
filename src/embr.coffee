@@ -422,13 +422,6 @@
 
   class embr.Fbo
 
-    status_suffixes = [
-      'INCOMPLETE_ATTACHMENT'
-      'INCOMPLETE_MISSING_ATTACHMENT'
-      'INCOMPLETE_DIMENSIONS'
-      'UNSUPPORTED'
-    ]
-
     constructor: ->
       @buffer = gl.createFramebuffer()
       @textures = []
@@ -456,11 +449,18 @@
 
       return @
 
+    fbo_status_suffixes = [
+      'INCOMPLETE_ATTACHMENT'
+      'INCOMPLETE_MISSING_ATTACHMENT'
+      'INCOMPLETE_DIMENSIONS'
+      'UNSUPPORTED'
+    ]
+
     check: ->
       @bind()
       status = gl.checkFramebufferStatus(gl.FRAMEBUFFER)
       if status != gl.FRAMEBUFFER_COMPLETE
-        for suffix in status_suffixes
+        for suffix in fbo_status_suffixes
           if status == gl["FRAMEBUFFER_#{suffix}"]
             throw "Framebuffer Status: #{status}"
       @unbind()
