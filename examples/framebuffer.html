@@ -1,6 +1,6 @@
 <!DOCTYPE HTML>
 <head>
-  <title>Embr : Framebuffer Example</title>
+  <title>embr : framebuffer example</title>
   <script src="../build/embr.js"></script>
   <script src="../lib/gl-matrix.js"></script>
   <style>
@@ -20,23 +20,23 @@ function init () {
   var canvas = document.getElementById("glcanvas")
     , gl = canvas.getContext("experimental-webgl");
 
-  Embr.setContext(Embr.wrapContextWithErrorChecks(gl));
+  embr.setContext(embr.wrapContextWithErrorChecks(gl));
 
-  var prog = new Embr.Program(
+  var prog = new embr.Program(
     document.getElementById("prog-vs").textContent,
     document.getElementById("prog-fs").textContent
   ).link();
 
-  var plane = Embr.Vbo.createPlane(-1, -1, 1, 1).setProg(prog);
+  var plane = embr.Vbo.createPlane(-1, -1, 1, 1).setProg(prog);
 
   var fbo_width = fbo_height = 32;
-  var fbo = new Embr.Fbo()
-    .attach(new Embr.Texture().set({
+  var fbo = new embr.Fbo()
+    .attach(new embr.Texture().set({
       width: fbo_width,
       height: fbo_height,
       data: null
     }))
-    .attach(new Embr.Rbo().set({
+    .attach(new embr.Rbo().set({
       width: fbo_width,
       height: fbo_height
     }))

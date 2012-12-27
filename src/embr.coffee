@@ -21,15 +21,15 @@
 
 (->
 
-  Embr = {}
+  embr = {}
   gl = gl_enums = gl_mipmap_filters = null
 
 
   ## Set GL context.
   # This must be called first.
 
-  Embr.setContext = (_gl) ->
-    Embr.gl = gl = _gl
+  embr.setContext = (_gl) ->
+    embr.gl = gl = _gl
 
     # Cache GL constants for later use.
     gl_mipmap_filters = [
@@ -41,12 +41,12 @@
 
     # Set default parameters.
 
-    Embr.Vbo.attr_default_params =
+    embr.Vbo.attr_default_params =
       size:   1
       stride: 0
       offset: 0
 
-    Embr.Texture.default_params =
+    embr.Texture.default_params =
       target:          gl.TEXTURE_2D
       unit:            0
       format:          gl.RGBA
@@ -64,7 +64,7 @@
       # Flip Y only works when `element` is specified.
       flip_y:          false
 
-    Embr.Rbo.default_params =
+    embr.Rbo.default_params =
       target:          gl.RENDERBUFFER
       format_internal: gl.DEPTH_COMPONENT16
       width:           0
@@ -75,7 +75,7 @@
 
   ## General Utilities
 
-  Embr.getGLEnumName = (e) ->
+  embr.getGLEnumName = (e) ->
     if gl_enums == null
       # Build GL enums lookup dictionary if necessary.
       gl_enums = {}
@@ -84,21 +84,21 @@
           gl_enums[gl[name]] = name
     return gl_enums[e]
 
-  Embr.checkError = (gl, msg) ->
+  embr.checkError = (gl, msg) ->
     errs = []
     # Check for any GL errors.
     while (err = gl.getError()) != gl.NO_ERROR
       errs.push(err)
     if errs.length > 0
       # Throw all GL errors.
-      throw msg + ": " + errs.map(Embr.getGLEnumName).join(", ")
+      throw msg + ": " + errs.map(embr.getGLEnumName).join(", ")
 
   # Create a GL context which checks for errors after every call.
-  Embr.wrapContextWithErrorChecks = (gl) ->
+  embr.wrapContextWithErrorChecks = (gl) ->
     wrapFn = (name, fn) ->
       return ->
         res = fn.apply(gl, arguments)
-        Embr.checkError(gl, "GL Error in #{name}")
+        embr.checkError(gl, "GL Error in #{name}")
         return res
     wrapped = {}
     for name of gl
@@ -120,7 +120,7 @@
 
   ## Shader Program
 
-  class Embr.Program
+  class embr.Program
 
     constructor: (vsrc, fsrc) ->
       if vsrc? or fsrc?
@@ -211,7 +211,7 @@
 
   ## Vertex Buffer Object
 
-  class Embr.Vbo
+  class embr.Vbo
 
     constructor: (@type, @usage = gl.STATIC_DRAW) ->
       @program = null
@@ -227,7 +227,7 @@
 
       attr = @attributes[name]
 
-      setParams(opts, attr, Embr.Vbo.attr_default_params)
+      setParams(opts, attr, embr.Vbo.attr_default_params)
 
       if (data = opts["data"])
         # Ensure data is a typed array
@@ -311,7 +311,7 @@
 
   ## Texture Object
 
-  class Embr.Texture
+  class embr.Texture
 
     constructor: (opts) ->
       @texture = null
@@ -324,7 +324,7 @@
       prh = params.height
       self = @
 
-      setParams(opts, params, Embr.Texture.default_params)
+      setParams(opts, params, embr.Texture.default_params)
 
       target = params.target
 
@@ -384,7 +384,7 @@
 
   ## Render Buffer Object
 
-  class Embr.Rbo
+  class embr.Rbo
 
     constructor: (opts) ->
       @buffer = gl.createRenderbuffer()
@@ -396,7 +396,7 @@
       prw = params.width
       prh = params.height
 
-      setParams(opts, params, Embr.Rbo.default_params)
+      setParams(opts, params, embr.Rbo.default_params)
 
       if prw != params.width or prh != params.height
         @bind()
@@ -419,7 +419,7 @@
 
   ## Frame Buffer Object
 
-  class Embr.Fbo
+  class embr.Fbo
 
     status_suffixes = [
       'INCOMPLETE_ATTACHMENT'
@@ -441,11 +441,11 @@
       @bind()
       obj.bind()
 
-      if obj instanceof Embr.Texture
+      if obj instanceof embr.Texture
         attachment = attachment ? @getNextColorAttachment()
         gl.framebufferTexture2D(gl.FRAMEBUFFER, attachment, obj.params.target, obj.texture, 0)
         @textures.push(obj)
-      else if obj instanceof Embr.Rbo
+      else if obj instanceof embr.Rbo
         attachment = attachment ? gl.DEPTH_ATTACHMENT
         gl.framebufferRenderbuffer(gl.FRAMEBUFFER, attachment, obj.params.target, obj.buffer)
         @renderbuffers.push(obj)
@@ -484,15 +484,15 @@
 
   # Export for Node.js
   if module? and module.exports?
-    module.exports = Embr
+    module.exports = embr
 
   # Export for AMD (RequireJS and similar)
   else if typeof define is 'function' and define.amd?
-    define(-> return Embr)
+    define(-> return embr)
 
   # Just append to the current context
   else
-    this.Embr = Embr
+    this.embr = embr
 
   return
 
