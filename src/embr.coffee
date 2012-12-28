@@ -123,13 +123,14 @@
 
   class embr.Program
 
-    constructor: (vsrc, fsrc) ->
-      if vsrc? or fsrc?
-        @compile(vsrc, fsrc)
-    @linked = false
+    constructor: (opts) ->
+      @program = null
+      @linked = false
+      @compile(opts) if opts?
 
-    compile: (vsrc, fsrc) ->
-      program = @program = gl.createProgram()
+    compile: (opts = {}) ->
+      # Ensure there is a program to attach to.
+      program = @program = @program ? gl.createProgram()
 
       compileAndAttach = (src, type) ->
         shader = gl.createShader(type)
@@ -142,8 +143,8 @@
         gl.attachShader(program, shader)
         gl.deleteShader(shader)
 
-      compileAndAttach(vsrc, gl.VERTEX_SHADER) if vsrc?
-      compileAndAttach(fsrc, gl.FRAGMENT_SHADER) if fsrc?
+      compileAndAttach(opts.vertex, gl.VERTEX_SHADER) if opts.vertex?
+      compileAndAttach(opts.fragment, gl.FRAGMENT_SHADER) if opts.fragment?
 
       return @
 
@@ -317,7 +318,7 @@
     constructor: (opts) ->
       @texture = null
       @settings = {}
-      @set(opts)
+      @set(opts) if opts?
 
     set: (opts = {}) ->
       settings = @settings
@@ -390,7 +391,7 @@
     constructor: (opts) ->
       @buffer = gl.createRenderbuffer()
       @settings = {}
-      @set(opts)
+      @set(opts) if opts?
 
     set: (opts = {}) ->
       settings = @settings
@@ -526,7 +527,7 @@
       }
       """
 
-    return new embr.Program(vs, fs)
+    return new embr.Program(vertex: vs, fragment: fs)
 
   embr.Vbo.createPlane = (xa, ya, xb, yb) ->
     positions = [ xa, ya, 0, xa, yb, 0, xb, ya, 0, xb, yb, 0 ]
