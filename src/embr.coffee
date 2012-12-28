@@ -47,28 +47,28 @@
       offset: 0
 
     embr.Texture.default_settings =
-      target:          gl.TEXTURE_2D
-      unit:            0
-      format:          gl.RGBA
-      format_internal: gl.RGBA
-      type:            gl.UNSIGNED_BYTE
-      filter:          gl.NEAREST
-      filter_min:      null
-      filter_mag:      null
-      wrap:            gl.CLAMP_TO_EDGE
-      wrap_s:          null
-      wrap_t:          null
-      width:           0
-      height:          0
+      target:         gl.TEXTURE_2D
+      unit:           0
+      format:         gl.RGBA
+      formatInternal: gl.RGBA
+      type:           gl.UNSIGNED_BYTE
+      filter:         gl.NEAREST
+      filterMin:      null
+      filterMag:      null
+      wrap:           gl.CLAMP_TO_EDGE
+      wrapS:          null
+      wrapT:          null
+      width:          0
+      height:         0
 
       # Flip Y only works when `element` is specified.
-      flip_y:          false
+      flip_y:         false
 
     embr.Rbo.default_settings =
-      target:          gl.RENDERBUFFER
-      format_internal: gl.DEPTH_COMPONENT16
-      width:           0
-      height:          0
+      target:         gl.RENDERBUFFER
+      formatInternal: gl.DEPTH_COMPONENT16
+      width:          0
+      height:         0
 
     return
 
@@ -199,11 +199,12 @@
       return @
 
     use: (uniforms) ->
-      if @linked
-        gl.useProgram(@program)
-        if uniforms?
-          for name of uniforms
-            @uniforms[name]?(uniforms[name])
+      if not @linked
+        throw 'Program must be linked before use.'
+      gl.useProgram(@program)
+      if uniforms?
+        for name of uniforms
+          @uniforms[name]?(uniforms[name])
       return @
 
     cleanup: ->
@@ -222,7 +223,7 @@
 
     setAttr: (name, opts) ->
       # Create buffer if none exists
-      if not @attributes[name]?
+      if @attributes[name] is undefined
         @attributes[name] =
           buffer:   gl.createBuffer()
           location: null
@@ -270,7 +271,7 @@
         @program = program
         for name of @attributes
           @attributes[name].location =
-            if program.locations[name] then program.locations[name] else null
+            if program.locations[name]? then program.locations[name] else null
       return @
 
     draw: ->
@@ -334,22 +335,22 @@
         self.texture = gl.createTexture() if self.texture is null
         self.bind()
 
-      if settings.width > 0 and settings.height > 0
+      if opts.data != undefined and settings.width > 0 and settings.height > 0
         createAndBind()
-        if opts.data? and pw == settings.width and ph == settings.height
+        if pw == settings.width and ph == settings.height
           gl.texSubImage2D(target, 0, 0, 0, settings.width, settings.height, settings.format, settings.type, opts.data)
         else
-          gl.texImage2D(target, 0, settings.format_internal, settings.width, settings.height, 0, settings.format, settings.type, opts.data)
+          gl.texImage2D(target, 0, settings.formatInternal, settings.width, settings.height, 0, settings.format, settings.type, opts.data)
       else if opts.element?
         createAndBind()
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true) if settings.flip_y
-        gl.texImage2D(target, 0, settings.format_internal, settings.format, settings.type, opts.element)
+        gl.texImage2D(target, 0, settings.formatInternal, settings.format, settings.type, opts.element)
 
       if @texture?
-        fmin = settings.filter_min ? settings.filter
-        fmag = settings.filter_mag ? settings.filter
-        ws = settings.wrap_s ? settings.wrap
-        wt = settings.wrap_t ? settings.wrap
+        fmin = settings.filterMin ? settings.filter
+        fmag = settings.filterMag ? settings.filter
+        ws = settings.wrapS ? settings.wrap
+        wt = settings.wrapT ? settings.wrap
 
         gl.texParameteri(target, gl.TEXTURE_MIN_FILTER, fmin)
         gl.texParameteri(target, gl.TEXTURE_MAG_FILTER, fmag)
@@ -402,7 +403,7 @@
 
       if pw != settings.width or ph != settings.height
         @bind()
-        gl.renderbufferStorage(settings.target, settings.format_internal, settings.width, settings.height)
+        gl.renderbufferStorage(settings.target, settings.formatInternal, settings.width, settings.height)
 
       return @
 
@@ -492,11 +493,12 @@
   embr.Program.default_build_settings =
     color:         true
     texture:       false
+    uvs:           false
     positionName:  'position'
     texcoordName:  'texcoord'
     colorOperator: '*'
 
-  embr.Program.buildProgram = (opts) ->
+  embr.Program.buildProgram = (opts = {}) ->
     setOpts(opts, settings = {}, embr.Program.default_build_settings)
 
     fs_color_parts = []
@@ -504,6 +506,8 @@
       fs_color_parts.push('uColor')
     if settings.texture
       fs_color_parts.push('texture2D(uTexture, vTexcoord)')
+    if settings.uvs
+      fs_color_parts.push('vec4(vTexcoord, 0., 1.)')
 
     vs = """
       uniform mat4 uTransform;
@@ -574,9 +578,9 @@
     ]
 
     return new embr.Vbo(gl.TRIANGLES)
-      .setAttr("position", data: positions, size: 3)
-      .setAttr("normal",   data: normals,   size: 3)
-      .setAttr("texcoord", data: texcoords, size: 2)
+      .setAttr('position', data: positions, size: 3)
+      .setAttr('normal',   data: normals,   size: 3)
+      .setAttr('texcoord', data: texcoords, size: 2)
       .setIndices(indices)
 
 

@@ -24,15 +24,18 @@ function init () {
 
   var prog = embr.Program.buildProgram({
     color: true,
-    texture: true
+    texture: true,
+    colorOperator: '+'
   }).link();
+
   var plane = embr.Vbo.createPlane(-1, -1, 1, 1).setProgram(prog);
 
-  var fbo_width = fbo_height = 32;
+  var fbo_width = fbo_height = 256;
   var fbo = new embr.Fbo()
     .attach(new embr.Texture({
       width: fbo_width,
       height: fbo_height,
+      filter: gl.LINEAR,
       data: null
     }))
     .attach(new embr.Rbo({
@@ -40,6 +43,12 @@ function init () {
       height: fbo_height
     }))
     .check();
+
+  var transform = mat4.create();
+  var projection = mat4.create();
+  var modelview = mat4.create();
+
+  var start = Date.now();
 
   function resize () {
     canvas.width = canvas.clientWidth;
@@ -53,12 +62,14 @@ function init () {
   }
 
   function draw () {
-    var time = Date.now() / 1000;
+    var time = (Date.now() - start) / 1000;
 
     // First pass. Draw to framebuffer.
-    var transform = mat4.identity();
-    mat4.scale(transform, vec3.create([ 0.5, 0.5, 0.5 ]));
-    mat4.rotateZ(transform, time);
+    mat4.ortho(-1, 1, -1, 1, -1, 1, projection);
+    mat4.identity(modelview);
+    mat4.scale(modelview, vec3.create([ 0.5, 0.5, 0.5 ]));
+    mat4.rotateZ(modelview, time);
+    mat4.multiply(projection, modelview, transform);
 
     fbo.bind();
 
@@ -66,28 +77,28 @@ function init () {
 
     prog.use({
       uTransform: transform,
-      uColor: [ 0, 0, 1, 1 ]
+      uColor: [ 1, 1, 0, 1 ]
     });
-
     plane.draw();
 
     fbo.unbind();
 
     // Second pass. Draw to screen.
     var aspect = canvas.width / canvas.height;
-    mat4.ortho(-aspect, aspect, -1, 1, -1, 1, transform);
-    mat4.rotateZ(transform, -time);
+    mat4.ortho(-aspect, aspect, -1, 1, -1, 1, projection);
+    mat4.identity(modelview);
+    mat4.rotateZ(modelview, time / -2);
+    mat4.multiply(projection, modelview, transform);
 
-    clearViewport(0, 0.25, 0, canvas.width, canvas.height);
+    clearViewport(0, 0, 0, canvas.width, canvas.height);
 
     fbo.textures[0].bind();
 
     prog.use({
       uTransform: transform,
       uTexture: 0,
-      uColor: [ 0, 1, 0, 1 ]
+      uColor: [ 0, 0, 1, 1 ]
     });
-
     plane.draw();
 
     fbo.textures[0].unbind();
@@ -95,7 +106,7 @@ function init () {
 
   window.addEventListener("resize", resize);
   resize();
-  setInterval(draw, 1000 / 30);
+  setInterval(draw, 1000 / 60);
 }
 
 </script>
