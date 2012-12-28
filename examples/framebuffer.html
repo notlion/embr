@@ -22,21 +22,20 @@ function init () {
 
   embr.setContext(embr.wrapContextWithErrorChecks(gl));
 
-  var prog = new embr.Program(
-    document.getElementById("prog-vs").textContent,
-    document.getElementById("prog-fs").textContent
-  ).link();
-
-  var plane = embr.Vbo.createPlane(-1, -1, 1, 1).setProg(prog);
+  var prog = embr.Program.buildProgram({
+    color: true,
+    texture: true
+  }).link();
+  var plane = embr.Vbo.createPlane(-1, -1, 1, 1).setProgram(prog);
 
   var fbo_width = fbo_height = 32;
   var fbo = new embr.Fbo()
-    .attach(new embr.Texture().set({
+    .attach(new embr.Texture({
       width: fbo_width,
       height: fbo_height,
       data: null
     }))
-    .attach(new embr.Rbo().set({
+    .attach(new embr.Rbo({
       width: fbo_width,
       height: fbo_height
     }))
@@ -66,8 +65,8 @@ function init () {
     clearViewport(0, 0, 0, fbo_width, fbo_height);
 
     prog.use({
-      u_mvp_matrix: transform,
-      u_color: [ 0, 0, 1, 1 ]
+      uTransform: transform,
+      uColor: [ 0, 0, 1, 1 ]
     });
 
     plane.draw();
@@ -84,9 +83,9 @@ function init () {
     fbo.textures[0].bind();
 
     prog.use({
-      u_mvp_matrix: transform,
-      u_texture: 0,
-      u_color: [ 0, 1, 0, 1 ]
+      uTransform: transform,
+      uTexture: 0,
+      uColor: [ 0, 1, 0, 1 ]
     });
 
     plane.draw();
@@ -97,35 +96,6 @@ function init () {
   window.addEventListener("resize", resize);
   resize();
   setInterval(draw, 1000 / 30);
-}
-
-</script>
-<script id="prog-vs" type="x-shader/x-vertex">
-
-uniform mat4 u_mvp_matrix;
-
-attribute vec3 position;
-attribute vec2 texcoord;
-
-varying vec2 v_texcoord;
-
-void main() {
-  v_texcoord = texcoord;
-  gl_Position = u_mvp_matrix * vec4(position, 1.);
-}
-
-</script>
-<script id="prog-fs" type="x-shader/x-fragment">
-
-precision highp float;
-
-uniform sampler2D u_texture;
-uniform vec4 u_color;
-
-varying vec2 v_texcoord;
-
-void main() {
-  gl_FragColor = u_color + texture2D(u_texture, v_texcoord);
 }
 
 </script>

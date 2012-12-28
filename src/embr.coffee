@@ -41,12 +41,12 @@
 
     # Set default parameters.
 
-    embr.Vbo.attr_default_params =
+    embr.Vbo.default_attr_settings =
       size:   1
       stride: 0
       offset: 0
 
-    embr.Texture.default_params =
+    embr.Texture.default_settings =
       target:          gl.TEXTURE_2D
       unit:            0
       format:          gl.RGBA
@@ -64,7 +64,7 @@
       # Flip Y only works when `element` is specified.
       flip_y:          false
 
-    embr.Rbo.default_params =
+    embr.Rbo.default_settings =
       target:          gl.RENDERBUFFER
       format_internal: gl.DEPTH_COMPONENT16
       width:           0
@@ -110,10 +110,10 @@
         prop
     return wrapped
 
-  setParams = (opts, dest, defaults) ->
+  setOpts = (src, dest, defaults) ->
     for name of defaults
-      if opts[name]?
-        dest[name] = opts[name]
+      if src[name]?
+        dest[name] = src[name]
       else if dest[name] is undefined
         dest[name] = defaults[name]
     return
@@ -228,7 +228,7 @@
 
       attr = @attributes[name]
 
-      setParams(opts, attr, embr.Vbo.attr_default_params)
+      setOpts(opts, attr, embr.Vbo.default_attr_settings)
 
       if (data = opts["data"])
         # Ensure data is a typed array
@@ -316,39 +316,39 @@
 
     constructor: (opts) ->
       @texture = null
-      @params = {}
+      @settings = {}
       @set(opts)
 
     set: (opts = {}) ->
-      params = @params
-      prw = params.width
-      prh = params.height
+      settings = @settings
+      pw = settings.width
+      ph = settings.height
       self = @
 
-      setParams(opts, params, embr.Texture.default_params)
+      setOpts(opts, settings, embr.Texture.default_settings)
 
-      target = params.target
+      target = settings.target
 
       createAndBind = ->
         self.texture = gl.createTexture() if self.texture is null
         self.bind()
 
-      if opts.data? and params.width > 0 and params.height > 0
+      if settings.width > 0 and settings.height > 0
         createAndBind()
-        if prw == params.width and prh == params.height
-          gl.texSubImage2D(target, 0, 0, 0, params.width, params.height, params.format, params.type, opts.data)
+        if opts.data? and pw == settings.width and ph == settings.height
+          gl.texSubImage2D(target, 0, 0, 0, settings.width, settings.height, settings.format, settings.type, opts.data)
         else
-          gl.texImage2D(target, 0, params.format_internal, params.width, params.height, 0, params.format, params.type, opts.data)
+          gl.texImage2D(target, 0, settings.format_internal, settings.width, settings.height, 0, settings.format, settings.type, opts.data)
       else if opts.element?
         createAndBind()
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true) if params.flip_y
-        gl.texImage2D(target, 0, params.format_internal, params.format, params.type, opts.element)
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true) if settings.flip_y
+        gl.texImage2D(target, 0, settings.format_internal, settings.format, settings.type, opts.element)
 
       if @texture?
-        fmin = params.filter_min ? params.filter
-        fmag = params.filter_mag ? params.filter
-        ws = params.wrap_s ? params.wrap
-        wt = params.wrap_t ? params.wrap
+        fmin = settings.filter_min ? settings.filter
+        fmag = settings.filter_mag ? settings.filter
+        ws = settings.wrap_s ? settings.wrap
+        wt = settings.wrap_t ? settings.wrap
 
         gl.texParameteri(target, gl.TEXTURE_MIN_FILTER, fmin)
         gl.texParameteri(target, gl.TEXTURE_MAG_FILTER, fmag)
@@ -366,16 +366,16 @@
       return @
 
     bind: (unit) ->
-      @params.unit ?= unit
+      @settings.unit ?= unit
       if @texture?
-        gl.activeTexture(gl.TEXTURE0 + @params.unit)
-        gl.bindTexture(@params.target, @texture)
+        gl.activeTexture(gl.TEXTURE0 + @settings.unit)
+        gl.bindTexture(@settings.target, @texture)
       return @
 
     unbind: ->
       if @texture?
-        gl.activeTexture(gl.TEXTURE0 + @params.unit)
-        gl.bindTexture(@params.target, null)
+        gl.activeTexture(gl.TEXTURE0 + @settings.unit)
+        gl.bindTexture(@settings.target, null)
       return @
 
     cleanup: ->
@@ -389,28 +389,28 @@
 
     constructor: (opts) ->
       @buffer = gl.createRenderbuffer()
-      @params = {}
+      @settings = {}
       @set(opts)
 
     set: (opts = {}) ->
-      params = @params
-      prw = params.width
-      prh = params.height
+      settings = @settings
+      pw = settings.width
+      ph = settings.height
 
-      setParams(opts, params, embr.Rbo.default_params)
+      setOpts(opts, settings, embr.Rbo.default_settings)
 
-      if prw != params.width or prh != params.height
+      if pw != settings.width or ph != settings.height
         @bind()
-        gl.renderbufferStorage(params.target, params.format_internal, params.width, params.height)
+        gl.renderbufferStorage(settings.target, settings.format_internal, settings.width, settings.height)
 
       return @
 
     bind: ->
-      gl.bindRenderbuffer(@params.target, @buffer)
+      gl.bindRenderbuffer(@settings.target, @buffer)
       return @
 
     unbind: ->
-      gl.bindRenderbuffer(@params.target, null)
+      gl.bindRenderbuffer(@settings.target, null)
       return @
 
     cleanup: ->
@@ -437,11 +437,11 @@
 
       if obj instanceof embr.Texture
         attachment = attachment ? @getNextColorAttachment()
-        gl.framebufferTexture2D(gl.FRAMEBUFFER, attachment, obj.params.target, obj.texture, 0)
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, attachment, obj.settings.target, obj.texture, 0)
         @textures.push(obj)
       else if obj instanceof embr.Rbo
         attachment = attachment ? gl.DEPTH_ATTACHMENT
-        gl.framebufferRenderbuffer(gl.FRAMEBUFFER, attachment, obj.params.target, obj.buffer)
+        gl.framebufferRenderbuffer(gl.FRAMEBUFFER, attachment, obj.settings.target, obj.buffer)
         @renderbuffers.push(obj)
 
       obj.unbind()
@@ -481,6 +481,102 @@
       for renderbuffer in @renderbuffers
         renderbuffer.cleanup()
       return @
+
+
+  ## Presets
+
+  # TODO(ryan): These should probably be moved to their own optional file and
+  # included via a build step.
+
+  embr.Program.default_build_settings =
+    color:         true
+    texture:       false
+    positionName:  'position'
+    texcoordName:  'texcoord'
+    colorOperator: '*'
+
+  embr.Program.buildProgram = (opts) ->
+    setOpts(opts, settings = {}, embr.Program.default_build_settings)
+
+    fs_color_parts = []
+    if settings.color
+      fs_color_parts.push('uColor')
+    if settings.texture
+      fs_color_parts.push('texture2D(uTexture, vTexcoord)')
+
+    vs = """
+      uniform mat4 uTransform;
+      attribute vec3 #{settings.positionName};
+      attribute vec2 #{settings.texcoordName};
+      varying vec2 vTexcoord;
+      void main(){
+        vTexcoord = #{settings.texcoordName};
+        gl_Position = uTransform * vec4(#{settings.positionName}, 1.);
+      }
+      """
+    fs = """
+      #ifdef GL_ES
+      precision highp float;
+      #endif
+      uniform vec4 uColor;
+      uniform sampler2D uTexture;
+      varying vec2 vTexcoord;
+      void main(){
+        gl_FragColor = #{fs_color_parts.join(settings.colorOperator)};
+      }
+      """
+
+    return new embr.Program(vs, fs)
+
+  embr.Vbo.createPlane = (xa, ya, xb, yb) ->
+    positions = [ xa, ya, 0, xa, yb, 0, xb, ya, 0, xb, yb, 0 ]
+    normals = [ 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1 ]
+    texcoords = [ 0, 0, 0, 1, 1, 0, 1, 1 ]
+
+    return new embr.Vbo(gl.TRIANGLE_STRIP)
+      .setAttr('position', data: positions, size: 3)
+      .setAttr('normal',   data: normals,   size: 3)
+      .setAttr('texcoord', data: texcoords, size: 2)
+
+  embr.Vbo.createBox = (xa, ya, za, xb, yb, zb) ->
+    positions = [
+      xb,yb,zb, xb,ya,zb, xb,ya,za, xb,yb,za, # +X
+      xb,yb,zb, xb,yb,za, xa,yb,za, xa,yb,zb, # +Y
+      xb,yb,zb, xa,yb,zb, xa,ya,zb, xb,ya,zb, # +Z
+      xa,yb,zb, xa,yb,za, xa,ya,za, xa,ya,zb, # -X
+      xa,ya,za, xb,ya,za, xb,ya,zb, xa,ya,zb, # -Y
+      xb,ya,za, xa,ya,za, xa,yb,za, xb,yb,za  # -Z
+    ]
+    normals = [
+       1, 0, 0,  1, 0, 0,  1, 0, 0,  1, 0, 0,
+       0, 1, 0,  0, 1, 0,  0, 1, 0,  0, 1, 0,
+       0, 0, 1,  0, 0, 1,  0, 0, 1,  0, 0, 1,
+      -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0,
+       0,-1, 0,  0,-1, 0,  0,-1, 0,  0,-1, 0,
+       0, 0,-1,  0, 0,-1,  0, 0,-1,  0, 0,-1
+    ]
+    texcoords = [
+      0,1, 1,1, 1,0, 0,0,
+      1,1, 1,0, 0,0, 0,1,
+      0,1, 1,1, 1,0, 0,0,
+      1,1, 1,0, 0,0, 0,1,
+      1,0, 0,0, 0,1, 1,1,
+      1,0, 0,0, 0,1, 1,1
+    ]
+    indices = [
+       0, 1, 2, 0, 2, 3,
+       4, 5, 6, 4, 6, 7,
+       8, 9,10, 8,10,11,
+      12,13,14,12,14,15,
+      16,17,18,16,18,19,
+      20,21,22,20,22,23
+    ]
+
+    return new embr.Vbo(gl.TRIANGLES)
+      .setAttr("position", data: positions, size: 3)
+      .setAttr("normal",   data: normals,   size: 3)
+      .setAttr("texcoord", data: texcoords, size: 2)
+      .setIndices(indices)
 
 
   # Export for Node.js
