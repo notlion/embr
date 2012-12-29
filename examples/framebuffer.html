@@ -7,6 +7,7 @@
   html, body {
     width: 100%; height: 100%;
     padding: 0; margin: 0;
+    overflow: hidden;
   }
   #glcanvas {
     width: 100%; height: 100%;
@@ -16,33 +17,39 @@
 <body onload="init()">
 <script>
 
-function init () {
+function init() {
   var canvas = document.getElementById("glcanvas")
     , gl = canvas.getContext("experimental-webgl");
 
-  embr.setContext(embr.wrapContextWithErrorChecks(gl));
+  embr.setContext(gl);
 
-  var prog = embr.Program.buildProgram({
+  var textureProg = embr.Program.buildProgram({
     color: true,
     texture: true,
     colorOperator: '+'
   }).link();
 
-  var plane = embr.Vbo.createPlane(-1, -1, 1, 1).setProgram(prog);
+  var plane = embr.Vbo.createPlane(-1, -1, 1, 1);
+  var cube = embr.Vbo.createBox(-1, -1, -1, 1, 1, 1);
 
-  var fbo_width = fbo_height = 256;
-  var fbo = new embr.Fbo()
-    .attach(new embr.Texture({
-      width: fbo_width,
-      height: fbo_height,
-      filter: gl.LINEAR,
-      data: null
-    }))
-    .attach(new embr.Rbo({
-      width: fbo_width,
-      height: fbo_height
-    }))
-    .check();
+  // Create Framebuffers
+  var fboSize = 256;
+  var fbos = [];
+  for(var i = 0; i < 2; ++i) {
+    fbos.push(new embr.Fbo()
+      .attach(new embr.Texture({
+        width:  fboSize,
+        height: fboSize,
+        filter: gl.LINEAR,
+        data:   null
+      }))
+      .attach(new embr.Rbo({
+        width:  fboSize,
+        height: fboSize
+      }))
+      .check()
+    );
+  }
 
   var transform = mat4.create();
   var projection = mat4.create();
@@ -50,38 +57,56 @@ function init () {
 
   var start = Date.now();
 
-  function resize () {
+  function updateSize() {
     canvas.width = canvas.clientWidth;
     canvas.height = canvas.clientHeight;
+  }
+
+  function swapFbos() {
+    var tmp = fbos[0];
+    fbos[0] = fbos[1];
+    fbos[1] = tmp;
   }
 
   function clearViewport (r, g, b, width, height) {
     gl.viewport(0, 0, width, height);
     gl.clearColor(r, g, b, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT, gl.DEPTH_BUFFER_BIT);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   }
 
   function draw () {
     var time = (Date.now() - start) / 1000;
 
     // First pass. Draw to framebuffer.
-    mat4.ortho(-1, 1, -1, 1, -1, 1, projection);
+    mat4.ortho(-1, 1, -1, 1, -2, 2, projection);
     mat4.identity(modelview);
-    mat4.scale(modelview, vec3.create([ 0.5, 0.5, 0.5 ]));
-    mat4.rotateZ(modelview, time);
+    mat4.scale(modelview, vec3.create([ 0.6, 0.6, 0.6 ]));
+    mat4.rotateX(modelview, time + Math.sin(time) * 0.5);
+    mat4.rotateZ(modelview, time + Math.cos(time) * 0.5);
     mat4.multiply(projection, modelview, transform);
 
-    fbo.bind();
+    fbos[0].bind();
 
-    clearViewport(0, 0, 0, fbo_width, fbo_height);
+      clearViewport(0, 0, 0, fboSize, fboSize);
 
-    prog.use({
-      uTransform: transform,
-      uColor: [ 1, 1, 0, 1 ]
-    });
-    plane.draw();
+      gl.enable(gl.DEPTH_TEST);
 
-    fbo.unbind();
+      var t = time * 5, pi2 = Math.PI * 2;
+
+      fbos[1].textures[0].bind();
+      textureProg.use({
+        uTransform: transform,
+        uColor: [
+          (Math.sin(t + pi2 * 0.33) + 1) * 0.05,
+          (Math.sin(t + pi2 * 0.66) + 1) * 0.05,
+          (Math.sin(t + pi2 * 1.00) + 1) * 0.05,
+          1
+        ]
+      });
+      cube.setProgram(textureProg).draw();
+      fbos[1].textures[0].unbind();
+
+    fbos[0].unbind();
 
     // Second pass. Draw to screen.
     var aspect = canvas.width / canvas.height;
@@ -92,20 +117,21 @@ function init () {
 
     clearViewport(0, 0, 0, canvas.width, canvas.height);
 
-    fbo.textures[0].bind();
-
-    prog.use({
+    fbos[0].textures[0].bind();
+    textureProg.use({
       uTransform: transform,
-      uTexture: 0,
-      uColor: [ 0, 0, 1, 1 ]
+      uColor:     [ 0, 0, 0.25, 1 ]
     });
-    plane.draw();
+    plane.setProgram(textureProg).draw();
+    fbos[0].textures[0].unbind();
 
-    fbo.textures[0].unbind();
+    swapFbos();
   }
 
-  window.addEventListener("resize", resize);
-  resize();
+  window.addEventListener("resize", updateSize);
+  updateSize();
+
+  // Start Loop
   setInterval(draw, 1000 / 60);
 }
 
