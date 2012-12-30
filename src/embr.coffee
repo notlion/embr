@@ -463,8 +463,9 @@
       status = gl.checkFramebufferStatus(gl.FRAMEBUFFER)
       if status != gl.FRAMEBUFFER_COMPLETE
         for suffix in fbo_status_suffixes
-          if status == gl["FRAMEBUFFER_#{suffix}"]
-            throw "Framebuffer Status: #{status}"
+          name = "FRAMEBUFFER_#{suffix}"
+          if status == gl[name]
+            throw "Framebuffer Status: #{name}"
       @unbind()
       return @
 
