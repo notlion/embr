@@ -155,11 +155,13 @@
       if !gl.getProgramParameter(program, gl.LINK_STATUS)
         throw gl.getProgramInfoLog(program)
 
-      makeUniformSetter = (type, location) ->
+      makeUniformSetter = (type, location, is_array) ->
         switch type
           when gl.BOOL, gl.INT, gl.SAMPLER_2D, gl.SAMPLER_CUBE
+            return (array) -> gl.uniform1iv(location, array) if is_array
             return (value) -> gl.uniform1i(location, value)
           when gl.FLOAT
+            return (array) -> gl.uniform1fv(location, array) if is_array
             return (value) -> gl.uniform1f(location, value)
           when gl.FLOAT_VEC2
             return (array) -> gl.uniform2fv(location, array)
@@ -181,12 +183,14 @@
       for i in [0...gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS)]
         info = gl.getActiveUniform(program, i)
         location = gl.getUniformLocation(program, info.name)
+        name = info.name
 
         # GLSL uniform arrays come with [0] appended. Since multiple variables
         # with the same name are not allowed we should be able to ignore this.
-        name = info.name.replace('[0]', '')
+        is_array = name.slice(-3) == '[0]'
+        name = name.slice(0, -3) if is_array
 
-        @uniforms[name] = makeUniformSetter(info.type, location)
+        @uniforms[name] = makeUniformSetter(info.type, location, is_array)
         @locations[name] = location
 
       for i in [0...gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES)]
@@ -475,6 +479,14 @@
 
     unbind: ->
       gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+      return @
+
+    bindTexture: (i, unit) ->
+      @textures[i].bind(unit)
+      return @
+
+    unbindTexture: (i) ->
+      @textures[i].unbind()
       return @
 
     cleanup: ->
