@@ -158,10 +158,12 @@
       makeUniformSetter = (type, location, is_array) ->
         switch type
           when gl.BOOL, gl.INT, gl.SAMPLER_2D, gl.SAMPLER_CUBE
-            return (array) -> gl.uniform1iv(location, array) if is_array
+            if is_array
+              return (array) -> gl.uniform1iv(location, array)
             return (value) -> gl.uniform1i(location, value)
           when gl.FLOAT
-            return (array) -> gl.uniform1fv(location, array) if is_array
+            if is_array
+              return (array) -> gl.uniform1fv(location, array)
             return (value) -> gl.uniform1f(location, value)
           when gl.FLOAT_VEC2
             return (array) -> gl.uniform2fv(location, array)
