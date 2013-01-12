@@ -492,7 +492,7 @@
   # included via a build step.
 
   embr.Program.default_build_settings =
-    color:         true
+    color:         false
     texture:       false
     uvs:           false
     positionName:  'position'
@@ -583,6 +583,40 @@
       .setAttr('normal',   data: normals,   size: 3)
       .setAttr('texcoord', data: texcoords, size: 2)
       .setIndices(indices)
+
+  embr.Vbo.createEllipse = (xRadius, yRadius, numSegments) ->
+    len = (numSegments + 2) * 3
+    iToTheta = Math.PI * 2 / (len - 6)
+
+    positions = new Float32Array(len)
+    normals = new Float32Array(len)
+    texcoords = new Float32Array(len)
+
+    for i in [0...len] by 3
+      theta = i * iToTheta
+      ct = Math.cos(theta)
+      st = Math.sin(theta)
+
+      # The first three elements of the arrays should be zeroed implicitly so
+      # we can skip those.
+      i0 = i + 3
+      i1 = i + 4
+      i2 = i + 5
+
+      positions[i0] = ct * xRadius
+      positions[i1] = st * yRadius
+      positions[i2] = 0
+      normals[i0] = 0
+      normals[i1] = 0
+      normals[i2] = 1
+      texcoords[i0] = ct * 0.5 + 0.5
+      texcoords[i1] = st * 0.5 + 0.5
+      texcoords[i2] = 0
+
+    return new embr.Vbo(gl.TRIANGLE_FAN)
+      .setAttr('position', data: positions, size: 3)
+      .setAttr('normal',   data: normals,   size: 3)
+      .setAttr('texcoord', data: texcoords, size: 2)
 
 
   # Export for Node.js
