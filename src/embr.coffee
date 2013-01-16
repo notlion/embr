@@ -41,10 +41,15 @@
 
     # Set default parameters.
 
-    embr.Vbo.default_attr_settings =
+    embr.VboAttr.default_settings =
       size:   1
+      type:   gl.FLOAT
+      usage:  gl.STATIC_DRAW
       stride: 0
       offset: 0
+
+    embr.VboIndices.default_settings =
+      usage: gl.STATIC_DRAW
 
     embr.Texture.default_settings =
       target:         gl.TEXTURE_2D
@@ -62,7 +67,7 @@
       height:         0
 
       # Flip Y only works when `element` is specified.
-      flip_y:         false
+      flipY:          false
 
     embr.Rbo.default_settings =
       target:         gl.RENDERBUFFER
@@ -220,55 +225,117 @@
 
   ## Vertex Buffer Object
 
+  class embr.VboAttr
+
+    constructor: (@name, opts) ->
+      @buffer = null
+      @location = null
+      @length = null
+      @settings = {}
+      @set(opts) if opts?
+
+    set: (opts = {}) ->
+      settings = @settings
+
+      setOpts(opts, settings, embr.VboAttr.default_settings)
+
+      # Data is not copied into settings so we look in opts.
+      if opts.data?
+        # Create buffer if none exists.
+        @buffer = gl.createBuffer() if @buffer is null
+
+        data = opts.data
+
+        # Ensure data is a typed array
+        if not (data.buffer instanceof ArrayBuffer)
+          throw 'Data must be an ArrayBufferView.'
+
+        if settings.stride > 0
+          @length = Math.floor(data.byteLength / settings.stride)
+        else
+          @length = Math.floor(data.length / settings.size)
+
+        # Buffer data
+        gl.bindBuffer(gl.ARRAY_BUFFER, @buffer)
+        gl.bufferData(gl.ARRAY_BUFFER, data, settings.usage)
+
+      return @
+
+    enable: ->
+      if @location?
+        settings = @settings
+        gl.bindBuffer(gl.ARRAY_BUFFER, @buffer)
+        gl.vertexAttribPointer(@location, settings.size, settings.type, false, settings.stride, settings.offset)
+        gl.enableVertexAttribArray(@location)
+      return @
+
+    disable: ->
+      gl.enableVertexAttribArray(@location) if @location?
+      return @
+
+    cleanup: ->
+      gl.deleteBuffer(@buffer)
+      return @
+
+
+  class embr.VboIndices
+
+    constructor: (opts) ->
+      @buffer = null
+      @settings = {}
+      @set(opts) if opts?
+
+    set: (opts = {}) ->
+      settings = @settings
+
+      setOpts(opts, settings, embr.VboIndices.default_settings)
+
+      if opts.data?
+        # Create buffer if none exists.
+        @buffer = gl.createBuffer() if @buffer is null
+
+        data = opts.data
+
+        # Ensure data is a typed array.
+        if not (data.buffer instanceof ArrayBuffer)
+          throw 'Data must be an ArrayBufferView.'
+
+        @length = data.length
+
+        # Buffer data
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, @buffer)
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, data, settings.usage)
+
+    bind: ->
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, @buffer)
+      return @
+
+    unbind: ->
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null)
+      return @
+
+    cleanup: ->
+      gl.deleteBuffer(@buffer)
+      return @
+
+
   class embr.Vbo
 
-    constructor: (@type, @usage = gl.STATIC_DRAW) ->
+    constructor: (@type) ->
       @program = null
       @indices = null
       @attributes = {}
 
-    setAttr: (name, opts) ->
-      # Create buffer if none exists
-      if @attributes[name] is undefined
-        @attributes[name] =
-          buffer:   gl.createBuffer()
-          location: null
-
-      attr = @attributes[name]
-
-      setOpts(opts, attr, embr.Vbo.default_attr_settings)
-
-      if (data = opts["data"])
-        # Ensure data is a typed array
-        if not (data instanceof Float32Array)
-          data = new Float32Array(data)
-
-        attr.length = Math.floor(
-          if attr.stride > 0
-            data.byteLength / attr.stride
-          else
-            data.length / attr.size
-        )
-
-        # Buffer data
-        gl.bindBuffer(gl.ARRAY_BUFFER, attr.buffer)
-        gl.bufferData(gl.ARRAY_BUFFER, data, @usage)
-
+    setAttr: (attr) ->
+      @attributes[attr.name] = attr
       return @
 
-    setIndices: (data) ->
-      # Create buffer if none exists
-      @indices = buffer: gl.createBuffer() if @indices is null
-      @indices.length = data.length
-
-      # Ensure data is a typed array
-      data = new Uint16Array(data) if not (data instanceof Uint16Array)
-
-      # Buffer data
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, @indices.buffer)
-      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, data, @usage)
-
+    setIndices: (indices) ->
+      @indices = indices
       return @
+
+    createAttr: (name, opts) -> @setAttr(new embr.VboAttr(name, opts))
+    createIndices: (opts) -> @setIndices(new embr.VboIndices(opts))
 
     # Associate attribute locations with a shader program. This must be called
     # before each time the VBO is drawn with a different program.
@@ -276,45 +343,45 @@
       if program.linked
         @program = program
         for name of @attributes
-          @attributes[name].location =
-            if program.locations[name]? then program.locations[name] else null
+          attr = @attributes[name]
+          attr.location = program.locations[attr.name] ? null
       return @
 
     draw: ->
       indices = @indices
-      length = Number.MAX_VALUE
-      enabled_locations = []
+      attributes = @attributes
+      min_length = Number.MAX_VALUE
+      enabled_attrs = []
 
       # Bind any attributes that are used in our shader.
-      for name of @attributes
-        attr = @attributes[name]
+      for name of attributes
+        attr = attributes[name]
         if attr.location? and attr.length > 0
-          gl.bindBuffer(gl.ARRAY_BUFFER, attr.buffer)
-          gl.vertexAttribPointer(attr.location, attr.size, gl.FLOAT, false, attr.stride, attr.offset)
-          gl.enableVertexAttribArray(attr.location)
-          enabled_locations.push(attr)
-          length = Math.min(length, attr.length)
+          attr.enable()
+          enabled_attrs.push(attr)
+          min_length = attr.length if attr.length < min_length
 
       # If no attributes are enabled, bail out.
-      return if enabled_locations.length == 0
+      return if enabled_attrs.length == 0
 
       # If indices are present, use glDrawElements.
       if indices?
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indices.buffer)
+        indices.bind()
         gl.drawElements(@type, indices.length, gl.UNSIGNED_SHORT, 0)
+        indices.unbind()
       # Otherwise, use glDrawArrays.
       else
-        gl.drawArrays(@type, 0, length)
+        gl.drawArrays(@type, 0, min_length)
 
       # Clean up GL state.
-      for location in enabled_locations
-        gl.disableVertexAttribArray(location)
+      attr.disable() for attr in enabled_attrs
 
       return @
 
     cleanup: ->
       for name of @attributes
-        gl.deleteBuffer(@attributes[name].buffer)
+        @attributes[name].cleanup()
+      @indices?.cleanup()
       return @
 
 
@@ -331,15 +398,14 @@
       settings = @settings
       pw = settings.width
       ph = settings.height
-      self = @
 
       setOpts(opts, settings, embr.Texture.default_settings)
 
       target = settings.target
 
-      createAndBind = ->
-        self.texture = gl.createTexture() if self.texture is null
-        self.bind()
+      createAndBind = =>
+        @texture = gl.createTexture() if @texture is null
+        @bind()
 
       if opts.data != undefined and settings.width > 0 and settings.height > 0
         createAndBind()
@@ -349,23 +415,23 @@
           gl.texImage2D(target, 0, settings.formatInternal, settings.width, settings.height, 0, settings.format, settings.type, opts.data)
       else if opts.element?
         createAndBind()
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true) if settings.flip_y
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true) if settings.flipY
         gl.texImage2D(target, 0, settings.formatInternal, settings.format, settings.type, opts.element)
 
       if @texture?
-        fmin = settings.filterMin ? settings.filter
-        fmag = settings.filterMag ? settings.filter
-        ws = settings.wrapS ? settings.wrap
-        wt = settings.wrapT ? settings.wrap
+        filterMin = settings.filterMin ? settings.filter
+        filterMag = settings.filterMag ? settings.filter
+        wrapS = settings.wrapS ? settings.wrap
+        wrapT = settings.wrapT ? settings.wrap
 
-        gl.texParameteri(target, gl.TEXTURE_MIN_FILTER, fmin)
-        gl.texParameteri(target, gl.TEXTURE_MAG_FILTER, fmag)
-        gl.texParameteri(target, gl.TEXTURE_WRAP_S, ws)
-        gl.texParameteri(target, gl.TEXTURE_WRAP_T, wt)
+        gl.texParameteri(target, gl.TEXTURE_MIN_FILTER, filterMin)
+        gl.texParameteri(target, gl.TEXTURE_MAG_FILTER, filterMag)
+        gl.texParameteri(target, gl.TEXTURE_WRAP_S, wrapS)
+        gl.texParameteri(target, gl.TEXTURE_WRAP_T, wrapT)
 
         # Generate mipmap if necessary.
         for filter in gl_mipmap_filters
-          if fmin == filter
+          if filterMin == filter
             gl.generateMipmap(target)
             break
 
@@ -374,7 +440,7 @@
       return @
 
     bind: (unit) ->
-      @settings.unit ?= unit
+      @settings.unit = unit if unit?
       if @texture?
         gl.activeTexture(gl.TEXTURE0 + @settings.unit)
         gl.bindTexture(@settings.target, @texture)
@@ -549,54 +615,54 @@
     return new embr.Program(vertex: vs, fragment: fs)
 
   embr.Vbo.createPlane = (xa, ya, xb, yb) ->
-    positions = [ xa, ya, 0, xa, yb, 0, xb, ya, 0, xb, yb, 0 ]
-    normals = [ 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1 ]
-    texcoords = [ 0, 0, 0, 1, 1, 0, 1, 1 ]
+    positions = new Float32Array([ xa, ya, 0, xa, yb, 0, xb, ya, 0, xb, yb, 0 ])
+    normals = new Float32Array([ 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1 ])
+    texcoords = new Float32Array([ 0, 0, 0, 1, 1, 0, 1, 1 ])
 
     return new embr.Vbo(gl.TRIANGLE_STRIP)
-      .setAttr('position', data: positions, size: 3)
-      .setAttr('normal',   data: normals,   size: 3)
-      .setAttr('texcoord', data: texcoords, size: 2)
+      .createAttr('position', data: positions, size: 3)
+      .createAttr('normal',   data: normals,   size: 3)
+      .createAttr('texcoord', data: texcoords, size: 2)
 
   embr.Vbo.createBox = (xa, ya, za, xb, yb, zb) ->
-    positions = [
+    positions = new Float32Array([
       xb,yb,zb, xb,ya,zb, xb,ya,za, xb,yb,za, # +X
       xb,yb,zb, xb,yb,za, xa,yb,za, xa,yb,zb, # +Y
       xb,yb,zb, xa,yb,zb, xa,ya,zb, xb,ya,zb, # +Z
       xa,yb,zb, xa,yb,za, xa,ya,za, xa,ya,zb, # -X
       xa,ya,za, xb,ya,za, xb,ya,zb, xa,ya,zb, # -Y
       xb,ya,za, xa,ya,za, xa,yb,za, xb,yb,za  # -Z
-    ]
-    normals = [
+    ])
+    normals = new Float32Array([
        1, 0, 0,  1, 0, 0,  1, 0, 0,  1, 0, 0,
        0, 1, 0,  0, 1, 0,  0, 1, 0,  0, 1, 0,
        0, 0, 1,  0, 0, 1,  0, 0, 1,  0, 0, 1,
       -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0,
        0,-1, 0,  0,-1, 0,  0,-1, 0,  0,-1, 0,
        0, 0,-1,  0, 0,-1,  0, 0,-1,  0, 0,-1
-    ]
-    texcoords = [
+    ])
+    texcoords = new Float32Array([
       0,1, 1,1, 1,0, 0,0,
       1,1, 1,0, 0,0, 0,1,
       0,1, 1,1, 1,0, 0,0,
       1,1, 1,0, 0,0, 0,1,
       1,0, 0,0, 0,1, 1,1,
       1,0, 0,0, 0,1, 1,1
-    ]
-    indices = [
+    ])
+    indices = new Uint16Array([
        0, 1, 2, 0, 2, 3,
        4, 5, 6, 4, 6, 7,
        8, 9,10, 8,10,11,
       12,13,14,12,14,15,
       16,17,18,16,18,19,
       20,21,22,20,22,23
-    ]
+    ])
 
     return new embr.Vbo(gl.TRIANGLES)
-      .setAttr('position', data: positions, size: 3)
-      .setAttr('normal',   data: normals,   size: 3)
-      .setAttr('texcoord', data: texcoords, size: 2)
-      .setIndices(indices)
+      .createAttr('position', data: positions, size: 3)
+      .createAttr('normal',   data: normals,   size: 3)
+      .createAttr('texcoord', data: texcoords, size: 2)
+      .createIndices(indices)
 
   embr.Vbo.createEllipse = (xRadius, yRadius, numSegments) ->
     len = (numSegments + 2) * 3
@@ -628,9 +694,9 @@
       texcoords[i2] = 0
 
     return new embr.Vbo(gl.TRIANGLE_FAN)
-      .setAttr('position', data: positions, size: 3)
-      .setAttr('normal',   data: normals,   size: 3)
-      .setAttr('texcoord', data: texcoords, size: 2)
+      .createAttr('position', data: positions, size: 3)
+      .createAttr('normal',   data: normals,   size: 3)
+      .createAttr('texcoord', data: texcoords, size: 2)
 
 
   # Export for Node.js
