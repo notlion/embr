@@ -218,6 +218,10 @@
           @uniforms[name]?(uniforms[name])
       return @
 
+    setUniform: (name, value) ->
+      @uniforms[name]?(value)
+      return @
+
     cleanup: ->
       gl.deleteProgram(@program)
       return @
@@ -326,16 +330,20 @@
       @indices = null
       @attributes = {}
 
+    getAttr: (name) -> @attributes[name]
     setAttr: (attr) ->
       @attributes[attr.name] = attr
       return @
 
+    getIndices: -> @indices
     setIndices: (indices) ->
       @indices = indices
       return @
 
     createAttr: (name, opts) -> @setAttr(new embr.VboAttr(name, opts))
     createIndices: (opts) -> @setIndices(new embr.VboIndices(opts))
+
+    getProgram: -> @program
 
     # Associate attribute locations with a shader program. This must be called
     # before each time the VBO is drawn with a different program.
@@ -575,6 +583,7 @@
     color:         false
     texture:       false
     uvs:           false
+    precision:     'highp'
     positionName:  'position'
     texcoordName:  'texcoord'
     colorOperator: '*'
@@ -602,7 +611,7 @@
       """
     fs = """
       #ifdef GL_ES
-      precision highp float;
+      precision #{settings.precision} float;
       #endif
       uniform vec4 uColor;
       uniform sampler2D uTexture;
@@ -612,7 +621,7 @@
       }
       """
 
-    return new embr.Program(vertex: vs, fragment: fs)
+    return new embr.Program(vertex: vs, fragment: fs).link()
 
   embr.Vbo.createPlane = (xa, ya, xb, yb) ->
     positions = new Float32Array([ xa, ya, 0, xa, yb, 0, xb, ya, 0, xb, yb, 0 ])
