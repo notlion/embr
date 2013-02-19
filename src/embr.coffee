@@ -238,6 +238,8 @@
       @settings = {}
       @set(opts) if opts?
 
+    get: (name) -> @settings[name]
+
     set: (opts = {}) ->
       settings = @settings
 
@@ -288,6 +290,8 @@
       @buffer = null
       @settings = {}
       @set(opts) if opts?
+
+    get: (name) -> @settings[name]
 
     set: (opts = {}) ->
       settings = @settings
@@ -402,6 +406,8 @@
       @settings = {}
       @set(opts) if opts?
 
+    get: (name) -> @settings[name]
+
     set: (opts = {}) ->
       settings = @settings
       pw = settings.width
@@ -473,6 +479,8 @@
       @buffer = gl.createRenderbuffer()
       @settings = {}
       @set(opts) if opts?
+
+    get: (name) -> @settings[name]
 
     set: (opts = {}) ->
       settings = @settings
