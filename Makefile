@@ -3,4 +3,4 @@ compile:
 docs:
 	./node_modules/docco/bin/docco -o ./docs ./src/*.coffee
 clean:
-	rm -rf ./docs
+	rm -rf ./build ./docs
