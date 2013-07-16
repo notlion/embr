@@ -1,8 +1,31 @@
 {
-  "name": "embr"
-, "version": "0.0.0"
-, "dependencies": {
-    "coffee-script": ">= 1.4.0"
-  , "docco": "*"
-  }
+  "name": "embr",
+  "version": "0.0.1",
+  "dependencies": {
+  },
+  "readmeFilename": "README",
+  "gitHead": "ea80a5f9457c5431e420e5ee76f53a3e9d268a7c",
+  "description": "Embr is a helper library which attempts to enable sharing code between Plask and WebGL. It is considered experimental and under heavy development.",
+  "main": "build/embr.js",
+  "directories": {
+    "doc": "docs",
+    "example": "examples"
+  },
+  "devDependencies": {
+    "coffee-script": "~1.4.0",
+    "docco": "*"
+  },
+  "scripts": {
+    "prepublish": "make compile"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/notlion/embr.git"
+  },
+  "keywords": [
+    "plask",
+    "webgl"
+  ],
+  "author": "Ryan Alexander",
+  "license": "MIT"
 }
