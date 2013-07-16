@@ -1,8 +1,6 @@
 compile:
-	./node_modules/coffee-script/bin/coffee -o ./build -c ./src
-docs:
-	./node_modules/docco/bin/docco -o ./docs ./src/*.coffee
+	./node_modules/coffee-script/bin/coffee -o ./lib -c ./src
 watch:
-	./node_modules/coffee-script/bin/coffee -w -o ./build -c ./src
+	./node_modules/coffee-script/bin/coffee -w -o ./lib -c ./src
 clean:
-	rm -rf ./build ./docs
+	rm -rf ./lib ./docs
