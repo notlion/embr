@@ -141,8 +141,12 @@ class embr.Program
     @compile(opts) if opts?
 
   compile: (opts = {}) ->
-    # Ensure there is a program to attach to.
-    program = @program = @program ? gl.createProgram()
+    # Attaching new shaders to a linked program can cause problems.
+    # Delete the program if there is one already
+    gl.deleteProgram(@program) if @program?
+
+    # Create a new program.
+    program = @program = gl.createProgram()
 
     compileAndAttach = (src, type) ->
       shader = gl.createShader(type)
